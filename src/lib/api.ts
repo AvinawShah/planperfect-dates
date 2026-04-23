@@ -3,6 +3,7 @@
 // When unset, returns realistic mock data so the app is fully demoable.
 
 import { mockDeals, mockEvents, mockItinerary } from "./mockData";
+import { supabase } from "@/integrations/supabase/client";
 
 export type Mood = "romantic" | "adventurous" | "chill" | "foodie" | "cultural" | "playful";
 
@@ -13,6 +14,23 @@ export interface PlanInput {
   startTime: string; // e.g. "17:30"
   durationHours: number;
   location: { lat: number; lng: number; label?: string };
+  // Optional rich context (used by AI)
+  city?: string;
+  area?: string;
+  cuisines?: string[];
+  vibes?: string[];
+  transport?: string;
+  dietary?: string[];
+  weather?: string;
+  occasion?: string;
+}
+
+export interface VibePrediction {
+  suggestedMood: Mood;
+  confidence: number;
+  reasoning: string;
+  tips: string[];
+  suggestedVibes: string[];
 }
 
 export interface ItineraryItem {
@@ -82,7 +100,74 @@ async function tryFetch<T>(path: string, init?: RequestInit, fallback?: T): Prom
 
 export async function generatePlan(input: PlanInput): Promise<Plan> {
   const fallback = mockItinerary(input);
+
+  // Try Lovable AI edge function first for a real AI itinerary
+  try {
+    const { data, error } = await supabase.functions.invoke("ai-suggest", {
+      body: {
+        mode: "plan",
+        city: input.city || input.location.label || "Bengaluru",
+        area: input.area,
+        budget: input.budget,
+        currency: input.currency,
+        mood: input.mood,
+        startTime: input.startTime,
+        durationHours: input.durationHours,
+        cuisines: input.cuisines,
+        vibes: input.vibes,
+        transport: input.transport,
+        dietary: input.dietary,
+        weather: input.weather,
+        occasion: input.occasion,
+      },
+    });
+    if (error) throw error;
+    if (data?.itinerary?.length) {
+      const total = data.itinerary.reduce((s: number, i: ItineraryItem) => s + (i.cost || 0), 0);
+      return {
+        id: `plan_${Date.now()}`,
+        title: data.title || `${input.mood} date`,
+        budget: input.budget,
+        currency: input.currency,
+        mood: input.mood,
+        location: input.area ? `${input.area}, ${input.city}` : (input.city || input.location.label || ""),
+        itinerary: data.itinerary,
+        totalCost: total,
+        createdAt: new Date().toISOString(),
+      };
+    }
+  } catch (err) {
+    console.warn("AI plan failed, using fallback:", err);
+  }
+
+  // Fallback to legacy backend or mock
   return tryFetch<Plan>("/api/plan/generate", { method: "POST", body: JSON.stringify(input) }, fallback);
+}
+
+export async function predictVibe(input: Omit<PlanInput, "mood" | "currency" | "location"> & { city: string; area?: string }): Promise<VibePrediction | null> {
+  try {
+    const { data, error } = await supabase.functions.invoke("ai-suggest", {
+      body: {
+        mode: "predict",
+        city: input.city,
+        area: input.area,
+        budget: input.budget,
+        startTime: input.startTime,
+        durationHours: input.durationHours,
+        cuisines: input.cuisines,
+        vibes: input.vibes,
+        transport: input.transport,
+        dietary: input.dietary,
+        weather: input.weather,
+        occasion: input.occasion,
+      },
+    });
+    if (error) throw error;
+    return data as VibePrediction;
+  } catch (err) {
+    console.warn("predictVibe failed:", err);
+    return null;
+  }
 }
 
 export async function surpriseMe(): Promise<Plan> {
