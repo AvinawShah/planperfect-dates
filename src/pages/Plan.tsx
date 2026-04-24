@@ -9,6 +9,7 @@ import LocationAutocomplete from "@/components/plan/LocationAutocomplete";
 import TemplateGallery from "@/components/plan/TemplateGallery";
 import ChipSelect from "@/components/plan/ChipSelect";
 import AIVibeCard from "@/components/plan/AIVibeCard";
+import NearbyMap from "@/components/plan/NearbyMap";
 import { Button } from "@/components/ui/button";
 import { generatePlan, predictVibe, savePlan, surpriseMe, type Mood, type Plan, type VibePrediction } from "@/lib/api";
 import { cityAreas, type AreaSuggestion } from "@/lib/locations";
