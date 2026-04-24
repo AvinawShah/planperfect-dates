@@ -370,10 +370,13 @@ const SkeletonPlan = () => (
 );
 
 const EmptyState = () => (
-  <div className="rounded-3xl border border-dashed border-primary/30 bg-card/50 p-12 text-center">
-    <div className="mx-auto h-16 w-16 rounded-full bg-gradient-rose flex items-center justify-center text-3xl shadow-soft">🌸</div>
-    <h3 className="mt-5 font-serif text-2xl">Your itinerary will appear here.</h3>
-    <p className="mt-2 text-muted-foreground max-w-sm mx-auto">Pick a template above or tweak the form. AI will suggest a vibe as you type — then craft a full plan with real places.</p>
+  <div className="relative overflow-hidden rounded-3xl border border-dashed border-primary/30 bg-gradient-blossom p-12 text-center">
+    <span className="pointer-events-none absolute top-6 left-8 text-2xl animate-float-slow">✨</span>
+    <span className="pointer-events-none absolute bottom-6 right-10 text-2xl animate-float-slow" style={{ animationDelay: "1.5s" }}>💖</span>
+    <span className="pointer-events-none absolute top-10 right-12 text-xl animate-float-slow" style={{ animationDelay: "2.2s" }}>🌷</span>
+    <div className="mx-auto h-20 w-20 rounded-full bg-gradient-aurora animate-gradient-pan flex items-center justify-center text-4xl shadow-glow animate-pop-in">🌸</div>
+    <h3 className="mt-5 font-serif text-2xl">Your itinerary will appear here ✨</h3>
+    <p className="mt-2 text-muted-foreground max-w-sm mx-auto">Pick a template above 👆 or tweak the form. AI 🤖 will suggest a vibe as you type — then craft a full plan with real places. 📍💕</p>
   </div>
 );
 
