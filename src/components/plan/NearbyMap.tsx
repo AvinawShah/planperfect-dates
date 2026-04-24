@@ -101,7 +101,7 @@ const NearbyMap = ({ lat, lng, label, radius = 1200 }: Props) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [activeFilters, setActiveFilters] = useState<Set<PlaceCategory>>(
-    new Set(["cafe", "bar", "restaurant", "park", "cinema"]),
+    new Set(["cafe", "bar", "restaurant", "park", "cinema", "spiritual"]),
   );
   const reqRef = useRef(0);
 
@@ -127,7 +127,7 @@ const NearbyMap = ({ lat, lng, label, radius = 1200 }: Props) => {
   const filtered = useMemo(() => places.filter((p) => activeFilters.has(p.category)), [places, activeFilters]);
 
   const counts = useMemo(() => {
-    const c: Record<PlaceCategory, number> = { cafe: 0, bar: 0, restaurant: 0, park: 0, cinema: 0 };
+    const c: Record<PlaceCategory, number> = { cafe: 0, bar: 0, restaurant: 0, park: 0, cinema: 0, spiritual: 0 };
     places.forEach((p) => { c[p.category]++; });
     return c;
   }, [places]);
