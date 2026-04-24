@@ -330,9 +330,9 @@ const PlanPage = () => {
         {/* Cafés near you — quick ranked list */}
         <section className="container-narrow pb-12">
           <div className="mb-4">
-            <p className="text-sm tracking-widest uppercase text-primary mb-2">Cafés for you</p>
-            <h2 className="font-serif text-2xl md:text-3xl">Closest cafés right now</h2>
-            <p className="mt-1 text-sm text-muted-foreground">Ranked by distance from <span className="text-foreground">{location.label}</span> — perfect for a coffee-first date.</p>
+            <p className="text-sm tracking-widest uppercase text-primary mb-2 flex items-center gap-1.5">☕ Cafés for you</p>
+            <h2 className="font-serif text-2xl md:text-3xl">Closest cafés right now ✨</h2>
+            <p className="mt-1 text-sm text-muted-foreground">Ranked by distance from <span className="text-foreground font-medium">📍 {location.label}</span> — perfect for a coffee-first date. 💕</p>
           </div>
           <NearbyCafes lat={location.lat} lng={location.lng} label={location.label} />
         </section>
@@ -340,9 +340,9 @@ const PlanPage = () => {
         {/* Nearby map — real OpenStreetMap data, no API key */}
         <section className="container-narrow pb-16">
           <div className="mb-4">
-            <p className="text-sm tracking-widest uppercase text-primary mb-2">Explore the area</p>
-            <h2 className="font-serif text-2xl md:text-3xl">Hangout spots near you</h2>
-            <p className="mt-1 text-sm text-muted-foreground">Real cafés, bars, restaurants, parks, temples & cinemas around <span className="text-foreground">{location.label}</span>.</p>
+            <p className="text-sm tracking-widest uppercase text-primary mb-2 flex items-center gap-1.5">🗺️ Explore the area</p>
+            <h2 className="font-serif text-2xl md:text-3xl">Hangout spots near you 🌟</h2>
+            <p className="mt-1 text-sm text-muted-foreground">Real cafés ☕, bars 🍷, restaurants 🍽️, parks 🌳, temples 🛕 & cinemas 🎬 around <span className="text-foreground font-medium">{location.label}</span>.</p>
           </div>
           <NearbyMap lat={location.lat} lng={location.lng} label={location.label} />
         </section>
