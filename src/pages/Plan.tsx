@@ -305,9 +305,9 @@ const PlanPage = () => {
             )}
 
             <div className="space-y-2 pt-2">
-              <Button type="submit" variant="hero" size="lg" disabled={loading} className="w-full">
+              <Button type="submit" variant="hero" size="lg" disabled={loading} className="w-full shadow-pop">
                 {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles />}
-                {loading ? "Crafting your date…" : "Generate plan"}
+                {loading ? "Crafting your date… 💫" : "💖 Generate plan"}
               </Button>
               <Button type="button" variant="outline" size="lg" disabled={loading} className="w-full" onClick={doSurprise}>
                 ✨ Surprise me
