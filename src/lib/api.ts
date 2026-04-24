@@ -144,7 +144,9 @@ export async function generatePlan(input: PlanInput): Promise<Plan> {
   return tryFetch<Plan>("/api/plan/generate", { method: "POST", body: JSON.stringify(input) }, fallback);
 }
 
-export async function predictVibe(input: Omit<PlanInput, "mood" | "currency" | "location"> & { city: string; area?: string }): Promise<VibePrediction | null> {
+export async function predictVibe(
+  input: Omit<PlanInput, "mood" | "currency" | "location"> & { city: string; area?: string },
+): Promise<VibePrediction | null> {
   try {
     const { data, error } = await supabase.functions.invoke("ai-suggest", {
       body: {
@@ -162,7 +164,17 @@ export async function predictVibe(input: Omit<PlanInput, "mood" | "currency" | "
         occasion: input.occasion,
       },
     });
-    if (error) throw error;
+    // Gracefully handle rate limits & errors — never throw from predict.
+    if (error) {
+      const msg = (error as { message?: string })?.message || "";
+      if (msg.includes("429") || msg.toLowerCase().includes("rate")) {
+        console.info("predictVibe rate limited, skipping");
+      } else {
+        console.warn("predictVibe error:", error);
+      }
+      return null;
+    }
+    if (data && typeof data === "object" && "error" in data) return null;
     return data as VibePrediction;
   } catch (err) {
     console.warn("predictVibe failed:", err);
