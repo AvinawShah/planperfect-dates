@@ -31,6 +31,7 @@ const moods: { value: Mood; label: string; emoji: string }[] = [
   { value: "adventurous", label: "Adventurous", emoji: "⛰️" },
   { value: "chill", label: "Chill", emoji: "🌙" },
   { value: "cultural", label: "Cultural", emoji: "🎭" },
+  { value: "spiritual", label: "Spiritual", emoji: "🛕" },
 ];
 
 const PlanPage = () => {
