@@ -124,9 +124,22 @@
   .bg-gradient-rose { background: var(--gradient-rose); }
   .bg-gradient-warm { background: var(--gradient-warm); }
   .bg-gradient-sunset { background: var(--gradient-sunset); }
+  .bg-gradient-aurora { background: var(--gradient-aurora); }
+  .bg-gradient-candy { background: var(--gradient-candy); }
+  .bg-gradient-mint-rose { background: var(--gradient-mint-rose); }
   .shadow-soft { box-shadow: var(--shadow-soft); }
   .shadow-glow { box-shadow: var(--shadow-glow); }
   .shadow-card { box-shadow: var(--shadow-card); }
+  .shadow-pop { box-shadow: var(--shadow-pop); }
+  .text-coral { color: hsl(var(--coral)); }
+  .text-violet-brand { color: hsl(var(--violet)); }
+  .text-tangerine { color: hsl(var(--tangerine)); }
+  .bg-coral { background-color: hsl(var(--coral)); }
+  .bg-violet-brand { background-color: hsl(var(--violet)); }
+  .bg-tangerine { background-color: hsl(var(--tangerine)); }
+  .bg-mint { background-color: hsl(var(--mint)); }
+  .bg-sky-brand { background-color: hsl(var(--sky)); }
+  .bg-lemon { background-color: hsl(var(--lemon)); }
 }
 
 @keyframes float-slow {
@@ -144,3 +157,25 @@
   background-size: 200% 100%;
   animation: shimmer 1.8s linear infinite;
 }
+
+@keyframes wiggle {
+  0%, 100% { transform: rotate(-3deg); }
+  50% { transform: rotate(3deg); }
+}
+.animate-wiggle { animation: wiggle 1.6s ease-in-out infinite; }
+
+@keyframes gradient-pan {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+.animate-gradient-pan {
+  background-size: 200% 200%;
+  animation: gradient-pan 8s ease infinite;
+}
+
+@keyframes pop-in {
+  0% { transform: scale(0.85); opacity: 0; }
+  60% { transform: scale(1.05); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+.animate-pop-in { animation: pop-in 0.5s var(--ease-out-soft) both; }
