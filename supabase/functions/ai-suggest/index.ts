@@ -51,7 +51,7 @@ const PREDICT_TOOL = {
       properties: {
         suggestedMood: {
           type: "string",
-          enum: ["romantic", "foodie", "playful", "adventurous", "chill", "cultural"],
+          enum: ["romantic", "foodie", "playful", "adventurous", "chill", "cultural", "spiritual"],
         },
         confidence: { type: "number", minimum: 0, maximum: 1 },
         reasoning: { type: "string", description: "1 sentence why this mood fits." },

@@ -54,6 +54,15 @@ const moodMap: Record<Mood, { title: string; flow: Array<{ activity: string; pla
       { activity: "Bookstore nightcap", place: "Atta Galatta", emoji: "📖", share: 0.05 },
     ],
   },
+  spiritual: {
+    title: "Temple & Tea",
+    flow: [
+      { activity: "Morning temple visit", place: "ISKCON Temple", emoji: "🛕", share: 0.05 },
+      { activity: "Quiet courtyard walk", place: "Bull Temple", emoji: "🌿", share: 0.05 },
+      { activity: "Sattvic thali lunch", place: "Mahesh Lunch Home", emoji: "🍛", share: 0.55 },
+      { activity: "Filter coffee & journal", place: "Airlines Hotel", emoji: "☕", share: 0.35 },
+    ],
+  },
 };
 
 function addMinutes(time: string, minutes: number): string {

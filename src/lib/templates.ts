@@ -94,6 +94,32 @@ export const dateTemplates: DateTemplate[] = [
     vibes: ["active", "outdoors"],
     weather: "sunny",
   },
+  {
+    id: "temple-date",
+    emoji: "🛕",
+    title: "Temple & Tea Morning",
+    blurb: "Quiet temple visit, slow walk, sattvic brunch and filter coffee.",
+    mood: "spiritual",
+    budget: 700,
+    durationHours: 4,
+    startTime: "07:30",
+    vibes: ["serene", "intimate", "outdoors"],
+    cuisines: ["Indian", "Cafe"],
+    occasion: "Just because",
+    transport: "walk",
+  },
+  {
+    id: "spiritual-sunset",
+    emoji: "🪔",
+    title: "Aarti & Riverside Sunset",
+    blurb: "Evening aarti, quiet riverside walk, soulful dinner.",
+    mood: "spiritual",
+    budget: 1200,
+    durationHours: 4,
+    startTime: "17:30",
+    vibes: ["serene", "reflective", "romantic"],
+    cuisines: ["Indian"],
+  },
 ];
 
 export const cuisineOptions = [
@@ -104,6 +130,7 @@ export const cuisineOptions = [
 export const vibeOptions = [
   "cozy", "lively", "intimate", "outdoors", "rooftop", "fancy",
   "casual", "indoor", "active", "celebratory", "elegant", "fun",
+  "serene", "reflective", "spiritual",
 ];
 
 export const dietaryOptions = ["Vegetarian", "Vegan", "Gluten-free", "Halal", "Jain", "Pescatarian"];

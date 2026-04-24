@@ -10,6 +10,7 @@ import TemplateGallery from "@/components/plan/TemplateGallery";
 import ChipSelect from "@/components/plan/ChipSelect";
 import AIVibeCard from "@/components/plan/AIVibeCard";
 import NearbyMap from "@/components/plan/NearbyMap";
+import NearbyCafes from "@/components/plan/NearbyCafes";
 import { Button } from "@/components/ui/button";
 import { generatePlan, predictVibe, savePlan, surpriseMe, type Mood, type Plan, type VibePrediction } from "@/lib/api";
 import { cityAreas, type AreaSuggestion } from "@/lib/locations";
@@ -31,6 +32,7 @@ const moods: { value: Mood; label: string; emoji: string }[] = [
   { value: "adventurous", label: "Adventurous", emoji: "⛰️" },
   { value: "chill", label: "Chill", emoji: "🌙" },
   { value: "cultural", label: "Cultural", emoji: "🎭" },
+  { value: "spiritual", label: "Spiritual", emoji: "🛕" },
 ];
 
 const PlanPage = () => {
@@ -321,12 +323,22 @@ const PlanPage = () => {
           </div>
         </section>
 
+        {/* Cafés near you — quick ranked list */}
+        <section className="container-narrow pb-12">
+          <div className="mb-4">
+            <p className="text-sm tracking-widest uppercase text-primary mb-2">Cafés for you</p>
+            <h2 className="font-serif text-2xl md:text-3xl">Closest cafés right now</h2>
+            <p className="mt-1 text-sm text-muted-foreground">Ranked by distance from <span className="text-foreground">{location.label}</span> — perfect for a coffee-first date.</p>
+          </div>
+          <NearbyCafes lat={location.lat} lng={location.lng} label={location.label} />
+        </section>
+
         {/* Nearby map — real OpenStreetMap data, no API key */}
         <section className="container-narrow pb-16">
           <div className="mb-4">
             <p className="text-sm tracking-widest uppercase text-primary mb-2">Explore the area</p>
             <h2 className="font-serif text-2xl md:text-3xl">Hangout spots near you</h2>
-            <p className="mt-1 text-sm text-muted-foreground">Real cafés, bars, restaurants, parks & cinemas around <span className="text-foreground">{location.label}</span>.</p>
+            <p className="mt-1 text-sm text-muted-foreground">Real cafés, bars, restaurants, parks, temples & cinemas around <span className="text-foreground">{location.label}</span>.</p>
           </div>
           <NearbyMap lat={location.lat} lng={location.lng} label={location.label} />
         </section>

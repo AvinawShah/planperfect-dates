@@ -5,7 +5,7 @@
 import { mockDeals, mockEvents, mockItinerary } from "./mockData";
 import { supabase } from "@/integrations/supabase/client";
 
-export type Mood = "romantic" | "adventurous" | "chill" | "foodie" | "cultural" | "playful";
+export type Mood = "romantic" | "adventurous" | "chill" | "foodie" | "cultural" | "playful" | "spiritual";
 
 export interface PlanInput {
   budget: number;

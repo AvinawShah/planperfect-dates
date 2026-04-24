@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { MapContainer, TileLayer, Marker, Popup, CircleMarker, useMap } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
-import { Loader2, MapPin, Coffee, Beer, UtensilsCrossed, Trees, Film, Sparkles } from "lucide-react";
+import { Loader2, MapPin, Coffee, Beer, UtensilsCrossed, Trees, Film, Sparkles, Flame } from "lucide-react";
 
 // Fix Leaflet default icon paths (Vite breaks the bundled assets)
 delete (L.Icon.Default.prototype as unknown as { _getIconUrl?: unknown })._getIconUrl;
@@ -12,7 +12,7 @@ L.Icon.Default.mergeOptions({
   shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
 });
 
-export type PlaceCategory = "cafe" | "bar" | "restaurant" | "park" | "cinema";
+export type PlaceCategory = "cafe" | "bar" | "restaurant" | "park" | "cinema" | "spiritual";
 
 export interface NearbyPlace {
   id: string;
@@ -21,6 +21,7 @@ export interface NearbyPlace {
   lng: number;
   category: PlaceCategory;
   cuisine?: string;
+  religion?: string;
 }
 
 interface Props {
@@ -36,6 +37,7 @@ const CATEGORY_META: Record<PlaceCategory, { label: string; color: string; icon:
   restaurant: { label: "Restaurants", color: "hsl(20 85% 55%)", icon: UtensilsCrossed },
   park: { label: "Parks", color: "hsl(140 55% 45%)", icon: Trees },
   cinema: { label: "Cinemas", color: "hsl(220 70% 55%)", icon: Film },
+  spiritual: { label: "Temples & spiritual", color: "hsl(38 90% 50%)", icon: Flame },
 };
 
 // Recenter map when the selected location changes
@@ -52,10 +54,10 @@ async function fetchNearbyPlaces(lat: number, lng: number, radius: number): Prom
   const query = `
     [out:json][timeout:15];
     (
-      node["amenity"~"cafe|bar|pub|restaurant|cinema"](around:${radius},${lat},${lng});
+      node["amenity"~"cafe|bar|pub|restaurant|cinema|place_of_worship"](around:${radius},${lat},${lng});
       node["leisure"~"park|garden"](around:${radius},${lat},${lng});
     );
-    out body 60;
+    out body 80;
   `.trim();
 
   const res = await fetch("https://overpass-api.de/api/interpreter", {
@@ -72,6 +74,7 @@ async function fetchNearbyPlaces(lat: number, lng: number, radius: number): Prom
     if (t.amenity === "bar" || t.amenity === "pub") return "bar";
     if (t.amenity === "restaurant") return "restaurant";
     if (t.amenity === "cinema") return "cinema";
+    if (t.amenity === "place_of_worship") return "spiritual";
     if (t.leisure === "park" || t.leisure === "garden") return "park";
     return null;
   };
@@ -87,6 +90,7 @@ async function fetchNearbyPlaces(lat: number, lng: number, radius: number): Prom
         lng: el.lon,
         category: cat,
         cuisine: el.tags.cuisine,
+        religion: el.tags.religion,
       } as NearbyPlace;
     })
     .filter((p): p is NearbyPlace => p !== null);
@@ -97,7 +101,7 @@ const NearbyMap = ({ lat, lng, label, radius = 1200 }: Props) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [activeFilters, setActiveFilters] = useState<Set<PlaceCategory>>(
-    new Set(["cafe", "bar", "restaurant", "park", "cinema"]),
+    new Set(["cafe", "bar", "restaurant", "park", "cinema", "spiritual"]),
   );
   const reqRef = useRef(0);
 
@@ -123,7 +127,7 @@ const NearbyMap = ({ lat, lng, label, radius = 1200 }: Props) => {
   const filtered = useMemo(() => places.filter((p) => activeFilters.has(p.category)), [places, activeFilters]);
 
   const counts = useMemo(() => {
-    const c: Record<PlaceCategory, number> = { cafe: 0, bar: 0, restaurant: 0, park: 0, cinema: 0 };
+    const c: Record<PlaceCategory, number> = { cafe: 0, bar: 0, restaurant: 0, park: 0, cinema: 0, spiritual: 0 };
     places.forEach((p) => { c[p.category]++; });
     return c;
   }, [places]);
