@@ -74,6 +74,7 @@ const PlanPage = () => {
 
   useEffect(() => {
     if (predictTimer.current) window.clearTimeout(predictTimer.current);
+    const myKey = predictKey;
     predictTimer.current = window.setTimeout(async () => {
       setPredicting(true);
       const p = await predictVibe({
@@ -89,9 +90,11 @@ const PlanPage = () => {
         weather: weather[0],
         occasion: occasion[0],
       });
-      setPrediction(p);
+      // Skip if inputs changed while we were waiting
+      if (myKey !== predictKey) return;
+      if (p) setPrediction(p);
       setPredicting(false);
-    }, 700);
+    }, 1500);
     return () => { if (predictTimer.current) window.clearTimeout(predictTimer.current); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [predictKey]);
