@@ -101,9 +101,20 @@ const LocationAutocomplete = ({ value, onChange }: Props) => {
 
   return (
     <div ref={wrapperRef} className="relative">
-      <label className="flex items-center gap-2 text-sm font-medium mb-2">
-        <MapPin className="h-4 w-4 text-primary" /> Where?
-      </label>
+      <div className="flex items-center justify-between mb-2">
+        <label className="flex items-center gap-2 text-sm font-medium">
+          <MapPin className="h-4 w-4 text-primary" /> Where?
+        </label>
+        <button
+          type="button"
+          onClick={useMyLocation}
+          disabled={locating}
+          className="flex items-center gap-1.5 text-xs font-medium text-primary hover:text-primary/80 transition disabled:opacity-60"
+        >
+          {locating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <LocateFixed className="h-3.5 w-3.5" />}
+          {locating ? "Locating…" : "Use my location"}
+        </button>
+      </div>
       <div className="relative">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <input
