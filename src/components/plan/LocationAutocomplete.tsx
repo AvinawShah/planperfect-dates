@@ -12,7 +12,71 @@ const LocationAutocomplete = ({ value, onChange }: Props) => {
   const [query, setQuery] = useState(value?.label ?? "");
   const [open, setOpen] = useState(false);
   const [activeCity, setActiveCity] = useState<string>("Bengaluru");
+  const [locating, setLocating] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
+
+  async function useMyLocation() {
+    if (!("geolocation" in navigator)) {
+      toast.error("Geolocation isn't supported by your browser.");
+      return;
+    }
+    setLocating(true);
+    try {
+      const pos = await new Promise<GeolocationPosition>((resolve, reject) =>
+        navigator.geolocation.getCurrentPosition(resolve, reject, {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 60000,
+        }),
+      );
+      const { latitude: lat, longitude: lng } = pos.coords;
+
+      // Reverse geocode via free Nominatim (no API key).
+      let cityName = "";
+      let areaName = "";
+      try {
+        const res = await fetch(
+          `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}&zoom=14&addressdetails=1`,
+          { headers: { "Accept-Language": "en" } },
+        );
+        if (res.ok) {
+          const data = await res.json();
+          const a = data.address || {};
+          cityName = a.city || a.town || a.state_district || a.state || "";
+          areaName = a.suburb || a.neighbourhood || a.city_district || a.locality || a.road || "";
+        }
+      } catch { /* nominatim is best-effort */ }
+
+      // Snap to the nearest curated area so AI + map have a known anchor.
+      const { area: nearest, km } = nearestArea(lat, lng);
+
+      const picked: AreaSuggestion = km < 8
+        ? nearest
+        : {
+            city: cityName || nearest.city,
+            area: areaName || "Current location",
+            label: areaName && cityName ? `${areaName}, ${cityName}` : (cityName || "Current location"),
+            lat, lng,
+            blurb: "Detected from your device location",
+            tags: ["nearby"],
+          };
+
+      onChange(picked);
+      setQuery(picked.label);
+      setOpen(false);
+      toast.success(
+        km < 8
+          ? `Detected ${picked.label} (snapped to nearest area)`
+          : `Using your location${cityName ? ` — ${cityName}` : ""}`,
+      );
+    } catch (err) {
+      const msg = (err as GeolocationPositionError)?.message || "Couldn't get your location.";
+      toast.error(msg);
+    } finally {
+      setLocating(false);
+    }
+  }
+
 
   useEffect(() => {
     if (value) setQuery(value.label);
