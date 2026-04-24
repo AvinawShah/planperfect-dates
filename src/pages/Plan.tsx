@@ -9,6 +9,7 @@ import LocationAutocomplete from "@/components/plan/LocationAutocomplete";
 import TemplateGallery from "@/components/plan/TemplateGallery";
 import ChipSelect from "@/components/plan/ChipSelect";
 import AIVibeCard from "@/components/plan/AIVibeCard";
+import NearbyMap from "@/components/plan/NearbyMap";
 import { Button } from "@/components/ui/button";
 import { generatePlan, predictVibe, savePlan, surpriseMe, type Mood, type Plan, type VibePrediction } from "@/lib/api";
 import { cityAreas, type AreaSuggestion } from "@/lib/locations";
@@ -318,6 +319,16 @@ const PlanPage = () => {
             )}
             {!loading && !plan && <EmptyState />}
           </div>
+        </section>
+
+        {/* Nearby map — real OpenStreetMap data, no API key */}
+        <section className="container-narrow pb-16">
+          <div className="mb-4">
+            <p className="text-sm tracking-widest uppercase text-primary mb-2">Explore the area</p>
+            <h2 className="font-serif text-2xl md:text-3xl">Hangout spots near you</h2>
+            <p className="mt-1 text-sm text-muted-foreground">Real cafés, bars, restaurants, parks & cinemas around <span className="text-foreground">{location.label}</span>.</p>
+          </div>
+          <NearbyMap lat={location.lat} lng={location.lng} label={location.label} />
         </section>
       </main>
       <Footer />
