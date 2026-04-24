@@ -53,9 +53,38 @@ export const cityAreas: AreaSuggestion[] = [
   { city: "Chennai", area: "Nungambakkam", label: "Nungambakkam, Chennai", lat: 13.0596, lng: 80.2426, blurb: "Cafés, bookshops, art galleries", tags: ["cafe", "art", "chill"] },
 
   // Kolkata
-  { city: "Kolkata", area: "Park Street", label: "Park Street, Kolkata", lat: 22.5530, lng: 88.3514, blurb: "Old-world bars, jazz nights", tags: ["bars", "cultural"] },
+  { city: "Kolkata", area: "Park Street", label: "Park Street, Kolkata", lat: 22.5530, lng: 88.3514, blurb: "Old-world bars, jazz nights", tags: ["bars", "cultural", "lively"] },
   { city: "Kolkata", area: "Princep Ghat", label: "Princep Ghat, Kolkata", lat: 22.5567, lng: 88.3306, blurb: "Hooghly riverside, evening boat rides", tags: ["river", "romantic", "outdoors"] },
+  { city: "Kolkata", area: "Salt Lake (Sector V)", label: "Salt Lake Sector V, Kolkata", lat: 22.5697, lng: 88.4337, blurb: "Tech park cafés, late-night chai", tags: ["cafe", "chill"] },
+  { city: "Kolkata", area: "New Town", label: "New Town, Kolkata", lat: 22.5784, lng: 88.4615, blurb: "Eco Park sunsets, themed gardens", tags: ["outdoors", "playful", "park"] },
+  { city: "Kolkata", area: "Ballygunge", label: "Ballygunge, Kolkata", lat: 22.5276, lng: 88.3650, blurb: "Bengali fine dining, leafy lanes", tags: ["foodie", "romantic"] },
+  { city: "Kolkata", area: "Gariahat", label: "Gariahat, Kolkata", lat: 22.5202, lng: 88.3656, blurb: "Saree shops, sweet shops, street food", tags: ["foodie", "cultural", "shopping"] },
+  { city: "Kolkata", area: "Esplanade", label: "Esplanade, Kolkata", lat: 22.5645, lng: 88.3510, blurb: "Victoria Memorial, tram rides, Maidan", tags: ["cultural", "walk", "central"] },
+  { city: "Kolkata", area: "Howrah Riverside", label: "Howrah Riverside, Kolkata", lat: 22.5851, lng: 88.3468, blurb: "Howrah bridge views, ferry crossings", tags: ["river", "romantic", "walk"] },
 ];
+
+// Haversine distance in km between two coordinates.
+export function distanceKm(lat1: number, lng1: number, lat2: number, lng2: number): number {
+  const R = 6371;
+  const toRad = (d: number) => (d * Math.PI) / 180;
+  const dLat = toRad(lat2 - lat1);
+  const dLng = toRad(lng2 - lng1);
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(a));
+}
+
+// Find the nearest curated area to a given coordinate.
+export function nearestArea(lat: number, lng: number): { area: AreaSuggestion; km: number } {
+  let best = cityAreas[0];
+  let bestKm = Infinity;
+  for (const a of cityAreas) {
+    const km = distanceKm(lat, lng, a.lat, a.lng);
+    if (km < bestKm) { bestKm = km; best = a; }
+  }
+  return { area: best, km: bestKm };
+}
 
 export function searchAreas(q: string, max = 6): AreaSuggestion[] {
   const query = q.trim().toLowerCase();

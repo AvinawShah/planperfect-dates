@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { MapPin, Search, X } from "lucide-react";
-import { searchAreas, popularCities, type AreaSuggestion } from "@/lib/locations";
+import { Loader2, LocateFixed, MapPin, Search, X } from "lucide-react";
+import { nearestArea, popularCities, searchAreas, type AreaSuggestion } from "@/lib/locations";
+import { toast } from "sonner";
 
 interface Props {
   value: AreaSuggestion | null;
@@ -11,7 +12,71 @@ const LocationAutocomplete = ({ value, onChange }: Props) => {
   const [query, setQuery] = useState(value?.label ?? "");
   const [open, setOpen] = useState(false);
   const [activeCity, setActiveCity] = useState<string>("Bengaluru");
+  const [locating, setLocating] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
+
+  async function useMyLocation() {
+    if (!("geolocation" in navigator)) {
+      toast.error("Geolocation isn't supported by your browser.");
+      return;
+    }
+    setLocating(true);
+    try {
+      const pos = await new Promise<GeolocationPosition>((resolve, reject) =>
+        navigator.geolocation.getCurrentPosition(resolve, reject, {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 60000,
+        }),
+      );
+      const { latitude: lat, longitude: lng } = pos.coords;
+
+      // Reverse geocode via free Nominatim (no API key).
+      let cityName = "";
+      let areaName = "";
+      try {
+        const res = await fetch(
+          `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}&zoom=14&addressdetails=1`,
+          { headers: { "Accept-Language": "en" } },
+        );
+        if (res.ok) {
+          const data = await res.json();
+          const a = data.address || {};
+          cityName = a.city || a.town || a.state_district || a.state || "";
+          areaName = a.suburb || a.neighbourhood || a.city_district || a.locality || a.road || "";
+        }
+      } catch { /* nominatim is best-effort */ }
+
+      // Snap to the nearest curated area so AI + map have a known anchor.
+      const { area: nearest, km } = nearestArea(lat, lng);
+
+      const picked: AreaSuggestion = km < 8
+        ? nearest
+        : {
+            city: cityName || nearest.city,
+            area: areaName || "Current location",
+            label: areaName && cityName ? `${areaName}, ${cityName}` : (cityName || "Current location"),
+            lat, lng,
+            blurb: "Detected from your device location",
+            tags: ["nearby"],
+          };
+
+      onChange(picked);
+      setQuery(picked.label);
+      setOpen(false);
+      toast.success(
+        km < 8
+          ? `Detected ${picked.label} (snapped to nearest area)`
+          : `Using your location${cityName ? ` — ${cityName}` : ""}`,
+      );
+    } catch (err) {
+      const msg = (err as GeolocationPositionError)?.message || "Couldn't get your location.";
+      toast.error(msg);
+    } finally {
+      setLocating(false);
+    }
+  }
+
 
   useEffect(() => {
     if (value) setQuery(value.label);
@@ -36,9 +101,20 @@ const LocationAutocomplete = ({ value, onChange }: Props) => {
 
   return (
     <div ref={wrapperRef} className="relative">
-      <label className="flex items-center gap-2 text-sm font-medium mb-2">
-        <MapPin className="h-4 w-4 text-primary" /> Where?
-      </label>
+      <div className="flex items-center justify-between mb-2">
+        <label className="flex items-center gap-2 text-sm font-medium">
+          <MapPin className="h-4 w-4 text-primary" /> Where?
+        </label>
+        <button
+          type="button"
+          onClick={useMyLocation}
+          disabled={locating}
+          className="flex items-center gap-1.5 text-xs font-medium text-primary hover:text-primary/80 transition disabled:opacity-60"
+        >
+          {locating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <LocateFixed className="h-3.5 w-3.5" />}
+          {locating ? "Locating…" : "Use my location"}
+        </button>
+      </div>
       <div className="relative">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <input
