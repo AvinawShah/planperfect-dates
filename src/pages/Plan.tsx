@@ -167,10 +167,14 @@ const PlanPage = () => {
     <div className="min-h-screen flex flex-col bg-gradient-warm">
       <Navbar />
       <main className="flex-1">
-        <section className="container-narrow pt-12 pb-6">
-          <p className="text-sm tracking-widest uppercase text-primary mb-3">Date planner</p>
-          <h1 className="font-serif text-4xl md:text-5xl leading-tight">Tell us the vibe.</h1>
-          <p className="mt-3 text-muted-foreground max-w-xl">Pick a template, tweak a few details, and let AI craft a real-place itinerary tailored to you.</p>
+        <section className="container-narrow pt-12 pb-6 relative">
+          <span className="pointer-events-none absolute right-6 top-8 text-3xl animate-float-slow hidden md:block">💌</span>
+          <span className="pointer-events-none absolute right-24 top-20 text-2xl animate-float-slow hidden md:block" style={{ animationDelay: "1.5s" }}>✨</span>
+          <p className="text-sm tracking-widest uppercase text-primary mb-3 flex items-center gap-2">
+            <span className="text-base">💖</span> Date planner
+          </p>
+          <h1 className="font-serif text-4xl md:text-5xl leading-tight">Tell us the <span className="gradient-text italic">vibe</span> ✨</h1>
+          <p className="mt-3 text-muted-foreground max-w-xl">Pick a template 👇, tweak a few details, and let AI craft a real-place itinerary tailored to you. 🍝🌅🎶</p>
         </section>
 
         <section className="container-narrow pb-8">
