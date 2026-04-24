@@ -6,48 +6,60 @@
 
 @layer base {
   :root {
-    --background: 30 50% 98%;            /* warm cream #FBF7F2 */
-    --foreground: 340 30% 15%;           /* deep plum text */
+    --background: 30 60% 98%;            /* warm cream */
+    --foreground: 340 35% 14%;           /* deep plum text */
 
     --card: 0 0% 100%;
-    --card-foreground: 340 30% 15%;
+    --card-foreground: 340 35% 14%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 340 30% 15%;
+    --popover-foreground: 340 35% 14%;
 
-    --primary: 343 55% 56%;              /* #c45c7c rose */
-    --primary-foreground: 30 50% 98%;
-    --primary-soft: 343 70% 87%;         /* #f8c8d8 */
-    --primary-glow: 343 80% 78%;
+    --primary: 340 78% 56%;              /* vibrant rose-magenta */
+    --primary-foreground: 30 60% 98%;
+    --primary-soft: 340 90% 90%;         /* pastel blush */
+    --primary-glow: 340 95% 75%;
 
-    --secondary: 340 60% 95%;            /* very soft pink */
-    --secondary-foreground: 343 45% 30%;
+    --secondary: 28 95% 92%;             /* warm peach */
+    --secondary-foreground: 14 70% 32%;
 
-    --muted: 30 30% 94%;
-    --muted-foreground: 340 12% 42%;
+    --muted: 30 40% 95%;
+    --muted-foreground: 340 14% 42%;
 
-    --accent: 340 80% 92%;               /* blossom accent */
-    --accent-foreground: 343 50% 30%;
+    --accent: 280 75% 90%;               /* lavender accent */
+    --accent-foreground: 280 50% 30%;
 
-    --destructive: 0 75% 55%;
+    /* Extra brand hues */
+    --coral: 14 92% 64%;
+    --tangerine: 28 95% 62%;
+    --violet: 280 75% 62%;
+    --sky: 200 90% 64%;
+    --mint: 160 70% 55%;
+    --lemon: 45 95% 64%;
+
+    --destructive: 0 80% 58%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 340 30% 90%;
-    --input: 340 30% 90%;
-    --ring: 343 55% 56%;
+    --border: 340 35% 90%;
+    --input: 340 35% 90%;
+    --ring: 340 78% 56%;
 
-    --radius: 1rem;
+    --radius: 1.25rem;
 
-    /* Brand gradients */
-    --gradient-blossom: linear-gradient(135deg, hsl(340 90% 96%) 0%, hsl(343 70% 90%) 50%, hsl(15 80% 90%) 100%);
-    --gradient-rose: linear-gradient(135deg, hsl(343 70% 87%) 0%, hsl(343 55% 56%) 100%);
-    --gradient-warm: linear-gradient(180deg, hsl(30 50% 98%) 0%, hsl(340 60% 96%) 100%);
-    --gradient-sunset: linear-gradient(135deg, hsl(15 90% 88%) 0%, hsl(343 65% 78%) 50%, hsl(330 55% 68%) 100%);
+    /* Brand gradients — bolder, more multi-hue */
+    --gradient-blossom: linear-gradient(135deg, hsl(45 100% 92%) 0%, hsl(340 95% 88%) 45%, hsl(280 85% 90%) 100%);
+    --gradient-rose: linear-gradient(135deg, hsl(340 95% 72%) 0%, hsl(340 78% 56%) 60%, hsl(320 70% 48%) 100%);
+    --gradient-warm: linear-gradient(180deg, hsl(45 100% 97%) 0%, hsl(28 95% 95%) 40%, hsl(340 90% 96%) 100%);
+    --gradient-sunset: linear-gradient(135deg, hsl(45 100% 70%) 0%, hsl(14 95% 65%) 40%, hsl(340 85% 62%) 75%, hsl(280 75% 60%) 100%);
+    --gradient-aurora: linear-gradient(135deg, hsl(280 80% 65%) 0%, hsl(340 85% 62%) 35%, hsl(14 95% 64%) 70%, hsl(45 100% 65%) 100%);
+    --gradient-candy: linear-gradient(135deg, hsl(200 95% 78%) 0%, hsl(280 85% 80%) 50%, hsl(340 95% 80%) 100%);
+    --gradient-mint-rose: linear-gradient(135deg, hsl(160 70% 75%) 0%, hsl(340 90% 78%) 100%);
 
     /* Shadows */
-    --shadow-soft: 0 4px 24px -8px hsl(343 55% 56% / 0.15);
-    --shadow-glow: 0 20px 60px -20px hsl(343 65% 60% / 0.35);
-    --shadow-card: 0 1px 2px hsl(343 30% 50% / 0.04), 0 12px 32px -12px hsl(343 40% 50% / 0.12);
+    --shadow-soft: 0 6px 24px -8px hsl(340 78% 56% / 0.22);
+    --shadow-glow: 0 24px 60px -20px hsl(340 85% 60% / 0.45);
+    --shadow-card: 0 1px 2px hsl(340 30% 50% / 0.05), 0 16px 40px -16px hsl(340 50% 50% / 0.18);
+    --shadow-pop: 0 10px 30px -10px hsl(14 92% 60% / 0.35), 0 6px 20px -8px hsl(280 75% 62% / 0.25);
 
     /* Motion */
     --ease-out-soft: cubic-bezier(0.16, 1, 0.3, 1);
@@ -112,9 +124,22 @@
   .bg-gradient-rose { background: var(--gradient-rose); }
   .bg-gradient-warm { background: var(--gradient-warm); }
   .bg-gradient-sunset { background: var(--gradient-sunset); }
+  .bg-gradient-aurora { background: var(--gradient-aurora); }
+  .bg-gradient-candy { background: var(--gradient-candy); }
+  .bg-gradient-mint-rose { background: var(--gradient-mint-rose); }
   .shadow-soft { box-shadow: var(--shadow-soft); }
   .shadow-glow { box-shadow: var(--shadow-glow); }
   .shadow-card { box-shadow: var(--shadow-card); }
+  .shadow-pop { box-shadow: var(--shadow-pop); }
+  .text-coral { color: hsl(var(--coral)); }
+  .text-violet-brand { color: hsl(var(--violet)); }
+  .text-tangerine { color: hsl(var(--tangerine)); }
+  .bg-coral { background-color: hsl(var(--coral)); }
+  .bg-violet-brand { background-color: hsl(var(--violet)); }
+  .bg-tangerine { background-color: hsl(var(--tangerine)); }
+  .bg-mint { background-color: hsl(var(--mint)); }
+  .bg-sky-brand { background-color: hsl(var(--sky)); }
+  .bg-lemon { background-color: hsl(var(--lemon)); }
 }
 
 @keyframes float-slow {
@@ -132,3 +157,25 @@
   background-size: 200% 100%;
   animation: shimmer 1.8s linear infinite;
 }
+
+@keyframes wiggle {
+  0%, 100% { transform: rotate(-3deg); }
+  50% { transform: rotate(3deg); }
+}
+.animate-wiggle { animation: wiggle 1.6s ease-in-out infinite; }
+
+@keyframes gradient-pan {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+.animate-gradient-pan {
+  background-size: 200% 200%;
+  animation: gradient-pan 8s ease infinite;
+}
+
+@keyframes pop-in {
+  0% { transform: scale(0.85); opacity: 0; }
+  60% { transform: scale(1.05); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+.animate-pop-in { animation: pop-in 0.5s var(--ease-out-soft) both; }

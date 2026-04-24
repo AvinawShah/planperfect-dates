@@ -167,10 +167,14 @@ const PlanPage = () => {
     <div className="min-h-screen flex flex-col bg-gradient-warm">
       <Navbar />
       <main className="flex-1">
-        <section className="container-narrow pt-12 pb-6">
-          <p className="text-sm tracking-widest uppercase text-primary mb-3">Date planner</p>
-          <h1 className="font-serif text-4xl md:text-5xl leading-tight">Tell us the vibe.</h1>
-          <p className="mt-3 text-muted-foreground max-w-xl">Pick a template, tweak a few details, and let AI craft a real-place itinerary tailored to you.</p>
+        <section className="container-narrow pt-12 pb-6 relative">
+          <span className="pointer-events-none absolute right-6 top-8 text-3xl animate-float-slow hidden md:block">💌</span>
+          <span className="pointer-events-none absolute right-24 top-20 text-2xl animate-float-slow hidden md:block" style={{ animationDelay: "1.5s" }}>✨</span>
+          <p className="text-sm tracking-widest uppercase text-primary mb-3 flex items-center gap-2">
+            <span className="text-base">💖</span> Date planner
+          </p>
+          <h1 className="font-serif text-4xl md:text-5xl leading-tight">Tell us the <span className="gradient-text italic">vibe</span> ✨</h1>
+          <p className="mt-3 text-muted-foreground max-w-xl">Pick a template 👇, tweak a few details, and let AI craft a real-place itinerary tailored to you. 🍝🌅🎶</p>
         </section>
 
         <section className="container-narrow pb-8">
@@ -207,14 +211,14 @@ const PlanPage = () => {
                 {moods.map((m) => (
                   <button
                     key={m.value} type="button" onClick={() => setMood(m.value)}
-                    className={`rounded-xl border px-3 py-2.5 text-sm transition-all ${
+                    className={`group rounded-2xl border px-3 py-3 text-sm transition-all active:scale-95 ${
                       mood === m.value
-                        ? "border-primary bg-primary-soft text-primary shadow-soft"
-                        : "border-border hover:border-primary/40"
+                        ? "border-transparent bg-gradient-rose text-primary-foreground shadow-pop -translate-y-0.5"
+                        : "border-border bg-card hover:border-primary/40 hover:bg-primary-soft/30"
                     }`}
                   >
-                    <div className="text-xl">{m.emoji}</div>
-                    <div className="mt-0.5 text-xs">{m.label}</div>
+                    <div className={`text-2xl ${mood === m.value ? "animate-wiggle" : "group-hover:scale-110 transition-transform"}`}>{m.emoji}</div>
+                    <div className={`mt-1 text-[11px] font-medium ${mood === m.value ? "" : "text-foreground/80"}`}>{m.label}</div>
                   </button>
                 ))}
               </div>
@@ -301,9 +305,9 @@ const PlanPage = () => {
             )}
 
             <div className="space-y-2 pt-2">
-              <Button type="submit" variant="hero" size="lg" disabled={loading} className="w-full">
+              <Button type="submit" variant="hero" size="lg" disabled={loading} className="w-full shadow-pop">
                 {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles />}
-                {loading ? "Crafting your date…" : "Generate plan"}
+                {loading ? "Crafting your date… 💫" : "💖 Generate plan"}
               </Button>
               <Button type="button" variant="outline" size="lg" disabled={loading} className="w-full" onClick={doSurprise}>
                 ✨ Surprise me
@@ -326,9 +330,9 @@ const PlanPage = () => {
         {/* Cafés near you — quick ranked list */}
         <section className="container-narrow pb-12">
           <div className="mb-4">
-            <p className="text-sm tracking-widest uppercase text-primary mb-2">Cafés for you</p>
-            <h2 className="font-serif text-2xl md:text-3xl">Closest cafés right now</h2>
-            <p className="mt-1 text-sm text-muted-foreground">Ranked by distance from <span className="text-foreground">{location.label}</span> — perfect for a coffee-first date.</p>
+            <p className="text-sm tracking-widest uppercase text-primary mb-2 flex items-center gap-1.5">☕ Cafés for you</p>
+            <h2 className="font-serif text-2xl md:text-3xl">Closest cafés right now ✨</h2>
+            <p className="mt-1 text-sm text-muted-foreground">Ranked by distance from <span className="text-foreground font-medium">📍 {location.label}</span> — perfect for a coffee-first date. 💕</p>
           </div>
           <NearbyCafes lat={location.lat} lng={location.lng} label={location.label} />
         </section>
@@ -336,9 +340,9 @@ const PlanPage = () => {
         {/* Nearby map — real OpenStreetMap data, no API key */}
         <section className="container-narrow pb-16">
           <div className="mb-4">
-            <p className="text-sm tracking-widest uppercase text-primary mb-2">Explore the area</p>
-            <h2 className="font-serif text-2xl md:text-3xl">Hangout spots near you</h2>
-            <p className="mt-1 text-sm text-muted-foreground">Real cafés, bars, restaurants, parks, temples & cinemas around <span className="text-foreground">{location.label}</span>.</p>
+            <p className="text-sm tracking-widest uppercase text-primary mb-2 flex items-center gap-1.5">🗺️ Explore the area</p>
+            <h2 className="font-serif text-2xl md:text-3xl">Hangout spots near you 🌟</h2>
+            <p className="mt-1 text-sm text-muted-foreground">Real cafés ☕, bars 🍷, restaurants 🍽️, parks 🌳, temples 🛕 & cinemas 🎬 around <span className="text-foreground font-medium">{location.label}</span>.</p>
           </div>
           <NearbyMap lat={location.lat} lng={location.lng} label={location.label} />
         </section>
@@ -366,10 +370,13 @@ const SkeletonPlan = () => (
 );
 
 const EmptyState = () => (
-  <div className="rounded-3xl border border-dashed border-primary/30 bg-card/50 p-12 text-center">
-    <div className="mx-auto h-16 w-16 rounded-full bg-gradient-rose flex items-center justify-center text-3xl shadow-soft">🌸</div>
-    <h3 className="mt-5 font-serif text-2xl">Your itinerary will appear here.</h3>
-    <p className="mt-2 text-muted-foreground max-w-sm mx-auto">Pick a template above or tweak the form. AI will suggest a vibe as you type — then craft a full plan with real places.</p>
+  <div className="relative overflow-hidden rounded-3xl border border-dashed border-primary/30 bg-gradient-blossom p-12 text-center">
+    <span className="pointer-events-none absolute top-6 left-8 text-2xl animate-float-slow">✨</span>
+    <span className="pointer-events-none absolute bottom-6 right-10 text-2xl animate-float-slow" style={{ animationDelay: "1.5s" }}>💖</span>
+    <span className="pointer-events-none absolute top-10 right-12 text-xl animate-float-slow" style={{ animationDelay: "2.2s" }}>🌷</span>
+    <div className="mx-auto h-20 w-20 rounded-full bg-gradient-aurora animate-gradient-pan flex items-center justify-center text-4xl shadow-glow animate-pop-in">🌸</div>
+    <h3 className="mt-5 font-serif text-2xl">Your itinerary will appear here ✨</h3>
+    <p className="mt-2 text-muted-foreground max-w-sm mx-auto">Pick a template above 👆 or tweak the form. AI 🤖 will suggest a vibe as you type — then craft a full plan with real places. 📍💕</p>
   </div>
 );
 
