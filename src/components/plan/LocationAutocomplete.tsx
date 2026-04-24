@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { MapPin, Search, X } from "lucide-react";
-import { searchAreas, popularCities, type AreaSuggestion } from "@/lib/locations";
+import { Loader2, LocateFixed, MapPin, Search, X } from "lucide-react";
+import { nearestArea, popularCities, searchAreas, type AreaSuggestion } from "@/lib/locations";
+import { toast } from "sonner";
 
 interface Props {
   value: AreaSuggestion | null;
