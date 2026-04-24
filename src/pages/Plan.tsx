@@ -211,14 +211,14 @@ const PlanPage = () => {
                 {moods.map((m) => (
                   <button
                     key={m.value} type="button" onClick={() => setMood(m.value)}
-                    className={`rounded-xl border px-3 py-2.5 text-sm transition-all ${
+                    className={`group rounded-2xl border px-3 py-3 text-sm transition-all active:scale-95 ${
                       mood === m.value
-                        ? "border-primary bg-primary-soft text-primary shadow-soft"
-                        : "border-border hover:border-primary/40"
+                        ? "border-transparent bg-gradient-rose text-primary-foreground shadow-pop -translate-y-0.5"
+                        : "border-border bg-card hover:border-primary/40 hover:bg-primary-soft/30"
                     }`}
                   >
-                    <div className="text-xl">{m.emoji}</div>
-                    <div className="mt-0.5 text-xs">{m.label}</div>
+                    <div className={`text-2xl ${mood === m.value ? "animate-wiggle" : "group-hover:scale-110 transition-transform"}`}>{m.emoji}</div>
+                    <div className={`mt-1 text-[11px] font-medium ${mood === m.value ? "" : "text-foreground/80"}`}>{m.label}</div>
                   </button>
                 ))}
               </div>
