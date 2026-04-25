@@ -182,6 +182,31 @@ export async function predictVibe(
   }
 }
 
+export interface DateStory {
+  title: string;
+  story: string;
+  highlight: string;
+  caption: string;
+}
+
+export async function generateDateStory(plan: Plan, opts?: { highlights?: string[]; photos?: string[] }): Promise<DateStory> {
+  const { data, error } = await supabase.functions.invoke("date-story", {
+    body: {
+      title: plan.title,
+      mood: plan.mood,
+      location: plan.location,
+      itinerary: plan.itinerary,
+      highlights: opts?.highlights,
+      photos: opts?.photos,
+    },
+  });
+  if (error) throw error;
+  if (data && typeof data === "object" && "error" in data) {
+    throw new Error((data as { error: string }).error);
+  }
+  return data as DateStory;
+}
+
 export async function surpriseMe(): Promise<Plan> {
   const input: PlanInput = {
     budget: 1500,
