@@ -115,6 +115,20 @@ const ItineraryView = ({ plan, onSave, onShare, saved }: Props) => {
           );
         })}
       </ol>
+
+      {/* Off-screen render target for image export */}
+      <div
+        aria-hidden
+        style={{
+          position: "fixed",
+          left: -10000,
+          top: 0,
+          pointerEvents: "none",
+          opacity: 0,
+        }}
+      >
+        <ShareableCard ref={cardRef} plan={plan} />
+      </div>
     </article>
   );
 };
