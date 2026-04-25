@@ -60,13 +60,17 @@ const ItineraryView = ({ plan, onSave, onShare, saved }: Props) => {
               💝 {plan.mood} · 📍 {plan.location} · 💸 {plan.currency}{plan.totalCost} of {plan.currency}{plan.budget}
             </p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             {onSave && (
               <Button onClick={onSave} variant="outline" size="sm" className="bg-white/90 border-white/40">
                 <Bookmark className="h-4 w-4" fill={saved ? "currentColor" : "none"} />
                 {saved ? "Saved 💖" : "Save"}
               </Button>
             )}
+            <Button onClick={handleExportImage} variant="outline" size="sm" disabled={exporting} className="bg-white/90 border-white/40">
+              {exporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+              {exporting ? "Exporting…" : "Export 🖼️"}
+            </Button>
             {onShare && (
               <Button onClick={onShare} variant="soft" size="sm" className="bg-white/90">
                 <Share2 className="h-4 w-4" /> Share
