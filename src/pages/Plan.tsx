@@ -12,6 +12,7 @@ import AIVibeCard from "@/components/plan/AIVibeCard";
 import NearbyMap from "@/components/plan/NearbyMap";
 import NearbyCafes from "@/components/plan/NearbyCafes";
 import DateStoryCard from "@/components/plan/DateStoryCard";
+import CoupleCompatCard from "@/components/plan/CoupleCompatCard";
 import { Button } from "@/components/ui/button";
 import { generatePlan, predictVibe, savePlan, surpriseMe, type Mood, type Plan, type VibePrediction } from "@/lib/api";
 import { cityAreas, type AreaSuggestion } from "@/lib/locations";
@@ -338,6 +339,14 @@ const PlanPage = () => {
           </div>
           <NearbyCafes lat={location.lat} lng={location.lng} label={location.label} />
         </section>
+
+        {/* Couple compatibility */}
+        <CoupleCompatCard
+          city={location.city}
+          area={location.area}
+          startTime={startTime}
+          durationHours={duration}
+        />
 
         {/* Nearby map — real OpenStreetMap data, no API key */}
         <section className="container-narrow pb-16">
