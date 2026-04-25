@@ -1,22 +1,91 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { BookHeart, Loader2, Copy, Sparkles, RefreshCw } from "lucide-react";
+import { BookHeart, Loader2, Copy, Sparkles, RefreshCw, ImagePlus, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { generateDateStory, type DateStory, type Plan } from "@/lib/api";
+import { generateDateStory, type DateStory, type Plan, type StoryPhoto } from "@/lib/api";
 
 interface Props {
   plan: Plan;
 }
 
+interface UIPhoto extends StoryPhoto {
+  previewUrl: string;
+}
+
+const MAX_PHOTOS = 4;
+const MAX_BYTES = 4 * 1024 * 1024; // 4MB per photo
+
+const moodToneLabel: Record<string, { label: string; emoji: string }> = {
+  romantic: { label: "Poetic & soft", emoji: "💕" },
+  spiritual: { label: "Poetic & soft", emoji: "🕊️" },
+  playful: { label: "Playful & fun", emoji: "🎉" },
+  foodie: { label: "Playful & fun", emoji: "🍝" },
+  adventurous: { label: "Playful & fun", emoji: "⛰️" },
+  chill: { label: "Cozy & reflective", emoji: "🌙" },
+  cultural: { label: "Cozy & reflective", emoji: "🎭" },
+};
+
 const DateStoryCard = ({ plan }: Props) => {
   const [story, setStory] = useState<DateStory | null>(null);
   const [loading, setLoading] = useState(false);
+  const [photos, setPhotos] = useState<UIPhoto[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const tone = moodToneLabel[plan.mood] || { label: "Warm & cinematic", emoji: "✨" };
+
+  function fileToDataUrl(file: File): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const r = new FileReader();
+      r.onload = () => resolve(String(r.result));
+      r.onerror = () => reject(r.error);
+      r.readAsDataURL(file);
+    });
+  }
+
+  async function handleAddPhotos(e: React.ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(e.target.files || []);
+    e.target.value = "";
+    if (!files.length) return;
+    const room = MAX_PHOTOS - photos.length;
+    if (room <= 0) {
+      toast.error(`You can attach up to ${MAX_PHOTOS} photos`);
+      return;
+    }
+    const next: UIPhoto[] = [];
+    for (const f of files.slice(0, room)) {
+      if (!f.type.startsWith("image/")) continue;
+      if (f.size > MAX_BYTES) {
+        toast.error(`${f.name} is too large (max 4MB)`);
+        continue;
+      }
+      const dataUrl = await fileToDataUrl(f);
+      next.push({
+        id: `photo${photos.length + next.length + 1}`,
+        previewUrl: dataUrl,
+        dataUrl,
+        description: "",
+      });
+    }
+    if (next.length) setPhotos((p) => [...p, ...next]);
+  }
+
+  function updateCaption(id: string, description: string) {
+    setPhotos((p) => p.map((ph) => (ph.id === id ? { ...ph, description } : ph)));
+  }
+
+  function removePhoto(id: string) {
+    setPhotos((p) => p.map((ph, i) => ({ ...ph, id: `photo${i + 1}` })).filter((ph) => ph.id !== id));
+    // re-id sequentially after removal
+    setPhotos((curr) => curr.filter((ph) => ph.id !== id).map((ph, i) => ({ ...ph, id: `photo${i + 1}` })));
+  }
 
   async function handleGenerate() {
     setLoading(true);
     try {
-      const s = await generateDateStory(plan);
+      const s = await generateDateStory(plan, {
+        photos: photos.map((p) => ({ id: p.id, description: p.description, dataUrl: p.dataUrl })),
+      });
       setStory(s);
       toast.success("Your story is ready 💌");
     } catch (err) {
@@ -31,10 +100,13 @@ const DateStoryCard = ({ plan }: Props) => {
 
   function copyAll() {
     if (!story) return;
-    const text = `${story.title}\n\n${story.story}\n\n✨ ${story.highlight}\n\n📸 ${story.caption}`;
+    const tags = (story.hashtags || []).join(" ");
+    const text = `${story.title}\n\n${story.story}\n\n✨ ${story.highlight}\n\n📸 ${story.caption}\n${tags}`;
     navigator.clipboard.writeText(text);
     toast.success("Copied to clipboard 📋");
   }
+
+  const photoById = (id?: string) => photos.find((p) => p.id === id);
 
   return (
     <section className="rounded-3xl overflow-hidden border border-primary/10 shadow-glow bg-gradient-candy animate-gradient-pan relative">
@@ -53,7 +125,7 @@ const DateStoryCard = ({ plan }: Props) => {
               Turn this date into a memory
             </h3>
             <p className="mt-1 text-white/85 text-sm md:text-base">
-              A warm, 150-word story written just for the two of you ✨
+              {tone.emoji} <span className="font-medium">{tone.label}</span> tone · add up to {MAX_PHOTOS} photos for a richer story ✨
             </p>
           </div>
           <Button
@@ -70,6 +142,63 @@ const DateStoryCard = ({ plan }: Props) => {
               <><Sparkles className="h-4 w-4" /> Generate Story 💌</>
             )}
           </Button>
+        </div>
+
+        {/* Photo uploader */}
+        <div className="mt-6 rounded-2xl bg-white/85 backdrop-blur p-4 md:p-5 shadow-soft">
+          <div className="flex items-center justify-between gap-3 flex-wrap">
+            <div className="text-sm font-medium text-foreground/80 flex items-center gap-2">
+              📸 Photos <span className="text-xs text-muted-foreground">({photos.length}/{MAX_PHOTOS})</span>
+            </div>
+            <div>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                multiple
+                onChange={handleAddPhotos}
+                className="hidden"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={photos.length >= MAX_PHOTOS}
+              >
+                <ImagePlus className="h-4 w-4" /> Add photos
+              </Button>
+            </div>
+          </div>
+
+          {photos.length > 0 ? (
+            <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-3">
+              {photos.map((p) => (
+                <div key={p.id} className="relative rounded-xl overflow-hidden border border-border bg-background group">
+                  <button
+                    type="button"
+                    onClick={() => removePhoto(p.id)}
+                    className="absolute top-1.5 right-1.5 z-10 rounded-full bg-black/60 text-white p-1 opacity-0 group-hover:opacity-100 transition"
+                    aria-label="Remove photo"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                  <img src={p.previewUrl} alt={`Date photo ${p.id}`} className="w-full h-28 object-cover" />
+                  <input
+                    type="text"
+                    value={p.description || ""}
+                    onChange={(e) => updateCaption(p.id, e.target.value)}
+                    placeholder={`Caption for ${p.id}…`}
+                    className="w-full text-xs px-2 py-1.5 border-t border-border bg-background focus:outline-none focus:border-primary"
+                  />
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="mt-3 text-xs text-muted-foreground">
+              Tip: add a photo or two and tag them with quick captions like "first laugh" or "sunset walk" — the AI will weave them into the story.
+            </p>
+          )}
         </div>
 
         <AnimatePresence mode="wait">
@@ -91,6 +220,43 @@ const DateStoryCard = ({ plan }: Props) => {
                 </p>
               </div>
 
+              {/* Timeline beats */}
+              {story.timeline?.length > 0 && (
+                <div className="rounded-2xl bg-white/90 backdrop-blur p-5 md:p-6 shadow-soft">
+                  <div className="text-[10px] uppercase tracking-widest text-primary font-bold mb-4">
+                    🎬 Story timeline
+                  </div>
+                  <div className="space-y-4">
+                    {story.timeline.map((beat, i) => {
+                      const photo = photoById(beat.photoReference);
+                      const dot = beat.moment === "Beginning" ? "🌅" : beat.moment === "Highlight" ? "✨" : "🌙";
+                      return (
+                        <div key={`${beat.moment}-${i}`} className="flex gap-3 items-start">
+                          <div className="flex-shrink-0 h-9 w-9 rounded-full bg-gradient-rose flex items-center justify-center text-base shadow-soft">
+                            {dot}
+                          </div>
+                          <div className="flex-1">
+                            <div className="text-xs font-semibold text-primary uppercase tracking-wide">
+                              {beat.moment}
+                            </div>
+                            <p className="mt-0.5 text-sm text-foreground/85 leading-relaxed">
+                              {beat.description}
+                            </p>
+                          </div>
+                          {photo && (
+                            <img
+                              src={photo.previewUrl}
+                              alt={beat.moment}
+                              className="h-16 w-16 rounded-lg object-cover border border-border flex-shrink-0"
+                            />
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
               <div className="grid md:grid-cols-2 gap-4">
                 <div className="rounded-2xl bg-white/90 backdrop-blur p-5 shadow-soft">
                   <div className="text-[10px] uppercase tracking-widest text-rose-500 font-bold">
@@ -103,6 +269,18 @@ const DateStoryCard = ({ plan }: Props) => {
                     📸 Insta Caption
                   </div>
                   <p className="mt-1.5 text-foreground/85">{story.caption}</p>
+                  {story.hashtags?.length > 0 && (
+                    <div className="mt-2 flex flex-wrap gap-1.5">
+                      {story.hashtags.map((tag) => (
+                        <span
+                          key={tag}
+                          className="text-[11px] px-2 py-0.5 rounded-full bg-violet-100 text-violet-700 font-medium"
+                        >
+                          {tag.startsWith("#") ? tag : `#${tag}`}
+                        </span>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
 

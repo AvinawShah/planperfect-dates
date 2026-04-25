@@ -1,5 +1,5 @@
-// Edge function: Turn a date itinerary into a warm, emotional "Date Story" memory.
-// Uses Lovable AI Gateway (Gemini) with structured tool output.
+// Edge function: Turn a date itinerary + photos into a warm, structured "Date Story" memory.
+// Uses Lovable AI Gateway (Gemini) with structured tool output and mood-based tone.
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -16,13 +16,19 @@ interface ItineraryItem {
   note?: string;
 }
 
+interface PhotoInput {
+  id: string;        // e.g. "photo1"
+  description?: string; // user-provided caption
+  dataUrl?: string;     // optional inline image (data:image/...;base64,...)
+}
+
 interface StoryPayload {
   title?: string;
   mood?: string;
   location?: string;
   itinerary: ItineraryItem[];
   highlights?: string[];
-  photos?: string[]; // optional photo descriptions
+  photos?: PhotoInput[];
 }
 
 const STORY_TOOL = {
@@ -30,7 +36,7 @@ const STORY_TOOL = {
   function: {
     name: "write_date_story",
     description:
-      "Compose a warm, emotional 120-200 word memory of a date, plus a highlight and Instagram caption.",
+      "Compose a warm, structured 120-200 word memory of a date with timeline, highlight, caption, and hashtags.",
     parameters: {
       type: "object",
       properties: {
@@ -38,22 +44,52 @@ const STORY_TOOL = {
         story: {
           type: "string",
           description:
-            "120-200 word personal memory written like prose. Opening, emotional middle, closing feeling. Warm, not robotic. May include 1-2 emojis sparingly.",
+            "120-200 word personal memory written like prose. Opening, emotional middle, closing feeling. Warm, sensory, slightly cinematic. May include 1-2 emojis sparingly.",
+        },
+        timeline: {
+          type: "array",
+          description: "Three structured beats: Beginning, Highlight, Ending. Reference photos by id when given.",
+          items: {
+            type: "object",
+            properties: {
+              moment: { type: "string", enum: ["Beginning", "Highlight", "Ending"] },
+              description: { type: "string", description: "1-2 vivid sentences describing this beat." },
+              photoReference: { type: "string", description: "Photo id like 'photo1' if relevant, else empty string." },
+            },
+            required: ["moment", "description", "photoReference"],
+            additionalProperties: false,
+          },
         },
         highlight: {
           type: "string",
-          description: "Single best moment — one warm sentence, ideally with an emoji like ❤️ or 😂.",
+          description: "Single most memorable moment — one warm sentence with an emoji like ❤️ or 😂.",
         },
         caption: {
           type: "string",
-          description: "Short Instagram-style caption (max ~120 chars) with 1-2 emojis and maybe a hashtag.",
+          description: "Short Instagram-style caption (max ~120 chars) with 1-2 emojis.",
+        },
+        hashtags: {
+          type: "array",
+          description: "3-6 short hashtags including #DateNight or similar.",
+          items: { type: "string" },
         },
       },
-      required: ["title", "story", "highlight", "caption"],
+      required: ["title", "story", "timeline", "highlight", "caption", "hashtags"],
       additionalProperties: false,
     },
   },
 };
+
+function toneFor(mood?: string): string {
+  const m = (mood || "").toLowerCase();
+  if (["romantic", "spiritual"].includes(m)) {
+    return "Tone: ROMANTIC — poetic, soft, emotional. Slow rhythm, tender imagery, lingering glances.";
+  }
+  if (["playful", "fun", "adventurous", "foodie"].includes(m)) {
+    return "Tone: FUN — playful, energetic, humorous. Quick beats, inside-joke energy, bright sensory pops.";
+  }
+  return "Tone: CHILL — calm, cozy, reflective. Warm light, easy silences, the comfort of being known.";
+}
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
@@ -80,12 +116,16 @@ Deno.serve(async (req) => {
       )
       .join("\n");
 
-    const ctx = [
+    const photoNotes = (payload.photos || [])
+      .map((p, idx) => `- ${p.id || `photo${idx + 1}`}${p.description ? `: ${p.description}` : " (no caption)"}`)
+      .join("\n");
+
+    const ctxText = [
       payload.title ? `Plan: ${payload.title}` : "",
       payload.location ? `Location: ${payload.location}` : "",
       payload.mood ? `Mood: ${payload.mood}` : "",
-      payload.highlights?.length ? `Highlights: ${payload.highlights.join(", ")}` : "",
-      payload.photos?.length ? `Photo notes: ${payload.photos.join("; ")}` : "",
+      payload.highlights?.length ? `Special moments: ${payload.highlights.join(", ")}` : "",
+      photoNotes ? `Photos:\n${photoNotes}` : "",
       "",
       "Itinerary:",
       timeline,
@@ -93,11 +133,23 @@ Deno.serve(async (req) => {
       .filter(Boolean)
       .join("\n");
 
-    const systemPrompt = `You are a romantic storyteller who turns a date itinerary into a short, emotional memory.
-Write like a personal memory, not a list. 120-200 words. Warm, sensory, real.
-Structure: opening (how it started) → middle (emotional/fun highlights, small moments, laughs, glances) → closing (lingering feeling).
-Avoid cliches like "amazing time" or "unforgettable journey". Use concrete details from the itinerary.
-Then provide a single best-moment highlight (one sentence with an emoji like ❤️ or 😂) and a short Instagram-style caption.`;
+    const systemPrompt = `You are an AI memory storyteller who turns a date into a beautiful, emotional story.
+Write like a personal memory — warm, sensory, slightly cinematic. 120-200 words.
+Structure: opening (how it started) → middle (emotional/fun highlights, small moments) → closing (lingering feeling).
+Use concrete details from the itinerary and the photo captions when given. Avoid cliches like "amazing time" or "unforgettable journey".
+Then produce a 3-beat timeline (Beginning, Highlight, Ending), a single best-moment highlight, a short Instagram caption, and 3-6 hashtags.
+${toneFor(payload.mood)}`;
+
+    // Build multimodal user content if any photos have data URLs.
+    const userContent: Array<
+      { type: "text"; text: string } | { type: "image_url"; image_url: { url: string } }
+    > = [{ type: "text", text: ctxText }];
+
+    for (const p of payload.photos || []) {
+      if (p.dataUrl && p.dataUrl.startsWith("data:image")) {
+        userContent.push({ type: "image_url", image_url: { url: p.dataUrl } });
+      }
+    }
 
     const aiRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -109,7 +161,7 @@ Then provide a single best-moment highlight (one sentence with an emoji like ❤
         model: "google/gemini-2.5-flash",
         messages: [
           { role: "system", content: systemPrompt },
-          { role: "user", content: ctx },
+          { role: "user", content: userContent.length === 1 ? ctxText : userContent },
         ],
         tools: [STORY_TOOL],
         tool_choice: { type: "function", function: { name: "write_date_story" } },
