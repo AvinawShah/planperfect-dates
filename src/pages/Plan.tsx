@@ -11,6 +11,7 @@ import ChipSelect from "@/components/plan/ChipSelect";
 import AIVibeCard from "@/components/plan/AIVibeCard";
 import NearbyMap from "@/components/plan/NearbyMap";
 import NearbyCafes from "@/components/plan/NearbyCafes";
+import DateStoryCard from "@/components/plan/DateStoryCard";
 import { Button } from "@/components/ui/button";
 import { generatePlan, predictVibe, savePlan, surpriseMe, type Mood, type Plan, type VibePrediction } from "@/lib/api";
 import { cityAreas, type AreaSuggestion } from "@/lib/locations";
@@ -319,8 +320,9 @@ const PlanPage = () => {
           <div>
             {loading && <SkeletonPlan />}
             {!loading && plan && (
-              <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
+              <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="space-y-6">
                 <ItineraryView plan={plan} onSave={handleSave} onShare={handleShare} saved={saved} />
+                <DateStoryCard plan={plan} />
               </motion.div>
             )}
             {!loading && !plan && <EmptyState />}
