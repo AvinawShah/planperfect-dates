@@ -182,14 +182,31 @@ export async function predictVibe(
   }
 }
 
+export interface StoryTimelineBeat {
+  moment: "Beginning" | "Highlight" | "Ending" | string;
+  description: string;
+  photoReference?: string;
+}
+
 export interface DateStory {
   title: string;
   story: string;
+  timeline: StoryTimelineBeat[];
   highlight: string;
   caption: string;
+  hashtags: string[];
 }
 
-export async function generateDateStory(plan: Plan, opts?: { highlights?: string[]; photos?: string[] }): Promise<DateStory> {
+export interface StoryPhoto {
+  id: string;
+  description?: string;
+  dataUrl?: string;
+}
+
+export async function generateDateStory(
+  plan: Plan,
+  opts?: { highlights?: string[]; photos?: StoryPhoto[] },
+): Promise<DateStory> {
   const { data, error } = await supabase.functions.invoke("date-story", {
     body: {
       title: plan.title,
