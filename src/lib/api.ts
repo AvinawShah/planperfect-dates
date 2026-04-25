@@ -224,6 +224,57 @@ export async function generateDateStory(
   return data as DateStory;
 }
 
+// --- Couple compatibility ---
+export interface CoupleProfile {
+  name?: string;
+  personality?: "introvert" | "extrovert" | "mixed" | "";
+  preferences?: string;
+  budget?: number;
+  mood?: Mood | "";
+  interests?: string[];
+  dislikes?: string[];
+  behaviors?: string[];
+}
+
+export interface CompatPlanStep {
+  time: string;
+  place: string;
+  activity: string;
+  cost: number;
+  emoji: string;
+  chosenFor: "User A" | "User B" | "Both";
+  reason: string;
+}
+
+export interface CoupleCompat {
+  compatibility: {
+    score: string;
+    summary: string;
+    commonInterests: string[];
+    differences: string[];
+  };
+  plan: CompatPlanStep[];
+  insight: string;
+  funNote: string;
+}
+
+export async function generateCoupleCompat(input: {
+  city?: string;
+  area?: string;
+  startTime?: string;
+  durationHours?: number;
+  userA: CoupleProfile;
+  userB: CoupleProfile;
+  nearbyPlaces?: { name: string; type?: string; cost?: number; vibe?: string }[];
+}): Promise<CoupleCompat> {
+  const { data, error } = await supabase.functions.invoke("couple-compat", { body: input });
+  if (error) throw error;
+  if (data && typeof data === "object" && "error" in data) {
+    throw new Error((data as { error: string }).error);
+  }
+  return data as CoupleCompat;
+}
+
 export async function surpriseMe(): Promise<Plan> {
   const input: PlanInput = {
     budget: 1500,
