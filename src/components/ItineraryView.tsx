@@ -1,7 +1,11 @@
+import { useRef, useState } from "react";
 import { motion } from "framer-motion";
-import { Bookmark, Share2, Sparkles } from "lucide-react";
+import { Bookmark, Share2, Sparkles, Download, Loader2 } from "lucide-react";
+import { toPng } from "html-to-image";
+import { toast } from "sonner";
 import type { Plan } from "@/lib/api";
 import { Button } from "@/components/ui/button";
+import ShareableCard from "@/components/plan/ShareableCard";
 
 interface Props {
   plan: Plan;
@@ -11,6 +15,32 @@ interface Props {
 }
 
 const ItineraryView = ({ plan, onSave, onShare, saved }: Props) => {
+  const cardRef = useRef<HTMLDivElement>(null);
+  const [exporting, setExporting] = useState(false);
+
+  async function handleExportImage() {
+    if (!cardRef.current) return;
+    setExporting(true);
+    try {
+      const dataUrl = await toPng(cardRef.current, {
+        pixelRatio: 2,
+        cacheBust: true,
+        backgroundColor: "#fff1f2",
+      });
+      const link = document.createElement("a");
+      const safeTitle = plan.title.replace(/[^a-z0-9]+/gi, "-").toLowerCase();
+      link.download = `datecraft-${safeTitle || "plan"}.png`;
+      link.href = dataUrl;
+      link.click();
+      toast.success("Image downloaded 💖");
+    } catch (err) {
+      console.error(err);
+      toast.error("Couldn't export image. Try again.");
+    } finally {
+      setExporting(false);
+    }
+  }
+
   return (
     <article className="rounded-3xl bg-card border border-primary/10 shadow-glow overflow-hidden">
       <header className="relative bg-gradient-aurora animate-gradient-pan p-8 md:p-10 overflow-hidden">
@@ -30,13 +60,17 @@ const ItineraryView = ({ plan, onSave, onShare, saved }: Props) => {
               💝 {plan.mood} · 📍 {plan.location} · 💸 {plan.currency}{plan.totalCost} of {plan.currency}{plan.budget}
             </p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             {onSave && (
               <Button onClick={onSave} variant="outline" size="sm" className="bg-white/90 border-white/40">
                 <Bookmark className="h-4 w-4" fill={saved ? "currentColor" : "none"} />
                 {saved ? "Saved 💖" : "Save"}
               </Button>
             )}
+            <Button onClick={handleExportImage} variant="outline" size="sm" disabled={exporting} className="bg-white/90 border-white/40">
+              {exporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+              {exporting ? "Exporting…" : "Export 🖼️"}
+            </Button>
             {onShare && (
               <Button onClick={onShare} variant="soft" size="sm" className="bg-white/90">
                 <Share2 className="h-4 w-4" /> Share
@@ -81,6 +115,20 @@ const ItineraryView = ({ plan, onSave, onShare, saved }: Props) => {
           );
         })}
       </ol>
+
+      {/* Off-screen render target for image export */}
+      <div
+        aria-hidden
+        style={{
+          position: "fixed",
+          left: -10000,
+          top: 0,
+          pointerEvents: "none",
+          opacity: 0,
+        }}
+      >
+        <ShareableCard ref={cardRef} plan={plan} />
+      </div>
     </article>
   );
 };
