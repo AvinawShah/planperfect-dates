@@ -273,6 +273,7 @@ export async function generateCoupleCompat(input: {
     throw new Error((data as { error: string }).error);
   }
   return data as CoupleCompat;
+}
 
 // --- Date Roulette ---
 export interface RouletteResult {
