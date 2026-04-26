@@ -8,6 +8,7 @@ import Plan from "./pages/Plan.tsx";
 import Events from "./pages/Events.tsx";
 import Deals from "./pages/Deals.tsx";
 import Saved from "./pages/Saved.tsx";
+import Journey from "./pages/Journey.tsx";
 import Login from "./pages/Login.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
@@ -25,6 +26,7 @@ const App = () => (
           <Route path="/events" element={<Events />} />
           <Route path="/deals" element={<Deals />} />
           <Route path="/saved" element={<Saved />} />
+          <Route path="/journey" element={<Journey />} />
           <Route path="/login" element={<Login />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />

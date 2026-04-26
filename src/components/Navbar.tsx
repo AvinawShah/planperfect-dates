@@ -1,5 +1,5 @@
 import { Link, NavLink, useNavigate } from "react-router-dom";
-import { Heart, LogOut } from "lucide-react";
+import { Heart, LogOut, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getCurrentUser, signOut } from "@/lib/api";
 import { useEffect, useState } from "react";
@@ -29,6 +29,7 @@ const Navbar = () => {
           {[
             { to: "/", label: "Home" },
             { to: "/plan", label: "Plan a date" },
+            { to: "/journey", label: "Our Journey", glow: true },
             { to: "/events", label: "Events" },
             { to: "/deals", label: "Deals" },
             { to: "/saved", label: "Saved" },
@@ -38,9 +39,16 @@ const Navbar = () => {
               to={l.to}
               end={l.to === "/"}
               className={({ isActive }) =>
-                `transition-colors hover:text-primary ${isActive ? "text-primary" : "text-muted-foreground"}`
+                l.glow
+                  ? `relative inline-flex items-center gap-1 px-3 py-1.5 rounded-full font-medium transition-all ${
+                      isActive
+                        ? "bg-gradient-rose text-primary-foreground shadow-glow"
+                        : "bg-primary-soft/60 text-primary hover:shadow-soft hover:scale-[1.03]"
+                    }`
+                  : `transition-colors hover:text-primary ${isActive ? "text-primary" : "text-muted-foreground"}`
               }
             >
+              {l.glow && <Sparkles className="h-3.5 w-3.5" />}
               {l.label}
             </NavLink>
           ))}

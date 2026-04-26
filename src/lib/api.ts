@@ -344,6 +344,56 @@ export async function adaptPlanLive(plan: Plan, ctx: LiveContext): Promise<LiveA
   return data as LiveAdaptation;
 }
 
+// --- Relationship Journey ---
+export interface JourneyStopInput {
+  place: string;
+  date?: string;
+  notes?: string;
+  mood?: string;
+  activity?: string;
+  coordinates?: { lat: number; lng: number };
+  photos?: string[];
+}
+
+export interface JourneyMemory {
+  place: string;
+  icon: string;
+  importance: "low" | "medium" | "high";
+  moodEmoji: string;
+  memory: string;
+  pathStyle: "dotted" | "smooth" | "glowing";
+}
+
+export interface JourneyStory {
+  title: string;
+  opening: string;
+  memories: JourneyMemory[];
+  narrative: string;
+  highlights: { firstDate: string; bestDate: string; funniest: string };
+  insights: string[];
+}
+
+export async function generateJourneyStory(input: {
+  stops: JourneyStopInput[];
+  city?: string;
+  coupleNames?: string;
+}): Promise<JourneyStory> {
+  const { data, error } = await supabase.functions.invoke("journey-story", { body: input });
+  if (error) throw error;
+  if (data && typeof data === "object" && "error" in data) {
+    throw new Error((data as { error: string }).error);
+  }
+  return data as JourneyStory;
+}
+
+const JOURNEY_KEY = "datecraft.journeyStops";
+export function getJourneyStops(): JourneyStopInput[] {
+  try { return JSON.parse(localStorage.getItem(JOURNEY_KEY) || "[]"); } catch { return []; }
+}
+export function saveJourneyStops(stops: JourneyStopInput[]): void {
+  localStorage.setItem(JOURNEY_KEY, JSON.stringify(stops));
+}
+
 export async function surpriseMe(): Promise<Plan> {
   const input: PlanInput = {
     budget: 1500,
