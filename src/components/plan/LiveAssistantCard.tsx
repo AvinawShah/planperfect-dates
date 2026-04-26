@@ -61,26 +61,6 @@ const LiveAssistantCard = ({ plan, onApplyUpdatedPlan }: Props) => {
     toast.success("Updated plan applied 💖");
   }
 
-  const Pill = <T extends string>({
-    options, value, onChange,
-  }: { options: { v: T; emoji: string; label: string }[]; value: T; onChange: (v: T) => void; }) => (
-    <div className="flex flex-wrap gap-2">
-      {options.map((o) => (
-        <button
-          key={o.v}
-          type="button"
-          onClick={() => onChange(o.v)}
-          className={`rounded-full border px-3 py-1.5 text-xs font-medium transition active:scale-95 ${
-            value === o.v
-              ? "border-transparent bg-gradient-rose text-primary-foreground shadow-pop"
-              : "border-border bg-card hover:border-primary/40 hover:bg-primary-soft/30"
-          }`}
-        >
-          <span className="mr-1">{o.emoji}</span>{o.label}
-        </button>
-      ))}
-    </div>
-  );
 
   return (
     <section className="rounded-3xl bg-card border border-primary/10 shadow-card overflow-hidden">
