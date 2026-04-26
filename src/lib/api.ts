@@ -275,6 +275,48 @@ export async function generateCoupleCompat(input: {
   return data as CoupleCompat;
 }
 
+// --- Live AI assistant ---
+export interface LiveContext {
+  currentTime?: string;
+  runningLate?: boolean;
+  userMood?: "tired" | "excited" | "neutral";
+  weather?: "sunny" | "rainy" | "cloudy";
+  crowdLevel?: "low" | "medium" | "high";
+  area?: string;
+  city?: string;
+  budget?: number;
+  nearbyAlternatives?: { name: string; type?: string; cost?: number; vibe?: string }[];
+}
+
+export interface LiveChange {
+  type: "skip" | "replace" | "adjust";
+  original: string;
+  new: string;
+  reason: string;
+}
+
+export interface LiveAdaptation {
+  status: "updated" | "unchanged";
+  changes: LiveChange[];
+  updatedPlan: ItineraryItem[];
+  assistantMessage: string;
+}
+
+export async function adaptPlanLive(plan: Plan, ctx: LiveContext): Promise<LiveAdaptation> {
+  const { data, error } = await supabase.functions.invoke("live-assist", {
+    body: {
+      plan: plan.itinerary,
+      budget: plan.budget,
+      ...ctx,
+    },
+  });
+  if (error) throw error;
+  if (data && typeof data === "object" && "error" in data) {
+    throw new Error((data as { error: string }).error);
+  }
+  return data as LiveAdaptation;
+}
+
 export async function surpriseMe(): Promise<Plan> {
   const input: PlanInput = {
     budget: 1500,

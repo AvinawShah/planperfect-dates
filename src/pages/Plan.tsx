@@ -13,6 +13,8 @@ import NearbyMap from "@/components/plan/NearbyMap";
 import NearbyCafes from "@/components/plan/NearbyCafes";
 import DateStoryCard from "@/components/plan/DateStoryCard";
 import CoupleCompatCard from "@/components/plan/CoupleCompatCard";
+import LiveAssistantCard from "@/components/plan/LiveAssistantCard";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { generatePlan, predictVibe, savePlan, surpriseMe, type Mood, type Plan, type VibePrediction } from "@/lib/api";
 import { cityAreas, type AreaSuggestion } from "@/lib/locations";
@@ -321,39 +323,71 @@ const PlanPage = () => {
           <div>
             {loading && <SkeletonPlan />}
             {!loading && plan && (
-              <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="space-y-6">
-                <ItineraryView plan={plan} onSave={handleSave} onShare={handleShare} saved={saved} />
-                <DateStoryCard plan={plan} />
-                <CoupleCompatCard
-                  city={location.city}
-                  area={location.area}
-                  startTime={startTime}
-                  durationHours={duration}
-                />
+              <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
+                <Tabs defaultValue="itinerary" className="space-y-5">
+                  <TabsList className="w-full flex-wrap h-auto bg-card/70 backdrop-blur border border-primary/10 p-1.5 rounded-2xl">
+                    <TabsTrigger value="itinerary" className="flex-1 min-w-[120px] data-[state=active]:bg-gradient-rose data-[state=active]:text-primary-foreground rounded-xl">
+                      🗓️ Itinerary
+                    </TabsTrigger>
+                    <TabsTrigger value="live" className="flex-1 min-w-[120px] data-[state=active]:bg-gradient-rose data-[state=active]:text-primary-foreground rounded-xl">
+                      ⚡ Live assistant
+                    </TabsTrigger>
+                    <TabsTrigger value="story" className="flex-1 min-w-[120px] data-[state=active]:bg-gradient-rose data-[state=active]:text-primary-foreground rounded-xl">
+                      💌 Date story
+                    </TabsTrigger>
+                    <TabsTrigger value="compat" className="flex-1 min-w-[120px] data-[state=active]:bg-gradient-rose data-[state=active]:text-primary-foreground rounded-xl">
+                      💞 Compatibility
+                    </TabsTrigger>
+                  </TabsList>
+
+                  <TabsContent value="itinerary" className="mt-0">
+                    <ItineraryView plan={plan} onSave={handleSave} onShare={handleShare} saved={saved} />
+                  </TabsContent>
+                  <TabsContent value="live" className="mt-0">
+                    <LiveAssistantCard plan={plan} onApplyUpdatedPlan={(p) => { setPlan(p); toast.success("Itinerary refreshed ✨"); }} />
+                  </TabsContent>
+                  <TabsContent value="story" className="mt-0">
+                    <DateStoryCard plan={plan} />
+                  </TabsContent>
+                  <TabsContent value="compat" className="mt-0">
+                    <CoupleCompatCard
+                      city={location.city}
+                      area={location.area}
+                      startTime={startTime}
+                      durationHours={duration}
+                    />
+                  </TabsContent>
+                </Tabs>
               </motion.div>
             )}
             {!loading && !plan && <EmptyState />}
           </div>
         </section>
 
-        {/* Cafés near you — quick ranked list */}
-        <section className="container-narrow pb-12">
-          <div className="mb-4">
-            <p className="text-sm tracking-widest uppercase text-primary mb-2 flex items-center gap-1.5">☕ Cafés for you</p>
-            <h2 className="font-serif text-2xl md:text-3xl">Closest cafés right now ✨</h2>
-            <p className="mt-1 text-sm text-muted-foreground">Ranked by distance from <span className="text-foreground font-medium">📍 {location.label}</span> — perfect for a coffee-first date. 💕</p>
-          </div>
-          <NearbyCafes lat={location.lat} lng={location.lng} label={location.label} />
-        </section>
-
-        {/* Nearby map — real OpenStreetMap data, no API key */}
+        {/* Explore your area — grouped section */}
         <section className="container-narrow pb-16">
-          <div className="mb-4">
-            <p className="text-sm tracking-widest uppercase text-primary mb-2 flex items-center gap-1.5">🗺️ Explore the area</p>
-            <h2 className="font-serif text-2xl md:text-3xl">Hangout spots near you 🌟</h2>
-            <p className="mt-1 text-sm text-muted-foreground">Real cafés ☕, bars 🍷, restaurants 🍽️, parks 🌳, temples 🛕 & cinemas 🎬 around <span className="text-foreground font-medium">{location.label}</span>.</p>
+          <div className="mb-6">
+            <p className="text-sm tracking-widest uppercase text-primary mb-2 flex items-center gap-1.5">🌍 Explore your area</p>
+            <h2 className="font-serif text-2xl md:text-3xl">Discover spots around <span className="gradient-text italic">{location.label}</span> ✨</h2>
+            <p className="mt-1 text-sm text-muted-foreground">Cafés, hangouts and hidden gems — all within reach. 💕</p>
           </div>
-          <NearbyMap lat={location.lat} lng={location.lng} label={location.label} />
+
+          <Tabs defaultValue="cafes" className="space-y-5">
+            <TabsList className="bg-card/70 backdrop-blur border border-primary/10 p-1.5 rounded-2xl">
+              <TabsTrigger value="cafes" className="data-[state=active]:bg-gradient-rose data-[state=active]:text-primary-foreground rounded-xl">
+                ☕ Closest cafés
+              </TabsTrigger>
+              <TabsTrigger value="map" className="data-[state=active]:bg-gradient-rose data-[state=active]:text-primary-foreground rounded-xl">
+                🗺️ Hangout map
+              </TabsTrigger>
+            </TabsList>
+            <TabsContent value="cafes" className="mt-0">
+              <NearbyCafes lat={location.lat} lng={location.lng} label={location.label} />
+            </TabsContent>
+            <TabsContent value="map" className="mt-0">
+              <NearbyMap lat={location.lat} lng={location.lng} label={location.label} />
+            </TabsContent>
+          </Tabs>
         </section>
       </main>
       <Footer />
