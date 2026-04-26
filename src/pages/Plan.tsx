@@ -14,6 +14,7 @@ import NearbyCafes from "@/components/plan/NearbyCafes";
 import DateStoryCard from "@/components/plan/DateStoryCard";
 import CoupleCompatCard from "@/components/plan/CoupleCompatCard";
 import LiveAssistantCard from "@/components/plan/LiveAssistantCard";
+import DateRouletteCard from "@/components/plan/DateRouletteCard";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { generatePlan, predictVibe, savePlan, surpriseMe, type Mood, type Plan, type VibePrediction } from "@/lib/api";
@@ -338,6 +339,9 @@ const PlanPage = () => {
                     <TabsTrigger value="compat" className="flex-1 min-w-[120px] data-[state=active]:bg-gradient-rose data-[state=active]:text-primary-foreground rounded-xl">
                       💞 Compatibility
                     </TabsTrigger>
+                    <TabsTrigger value="roulette" className="flex-1 min-w-[120px] data-[state=active]:bg-gradient-rose data-[state=active]:text-primary-foreground rounded-xl">
+                      🎲 Roulette
+                    </TabsTrigger>
                   </TabsList>
 
                   <TabsContent value="itinerary" className="mt-0">
@@ -355,6 +359,14 @@ const PlanPage = () => {
                       area={location.area}
                       startTime={startTime}
                       durationHours={duration}
+                    />
+                  </TabsContent>
+                  <TabsContent value="roulette" className="mt-0">
+                    <DateRouletteCard
+                      budget={budget}
+                      mood={mood}
+                      city={location.city}
+                      area={location.area}
                     />
                   </TabsContent>
                 </Tabs>
