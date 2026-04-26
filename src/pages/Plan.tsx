@@ -14,6 +14,7 @@ import NearbyCafes from "@/components/plan/NearbyCafes";
 import DateStoryCard from "@/components/plan/DateStoryCard";
 import CoupleCompatCard from "@/components/plan/CoupleCompatCard";
 import LiveAssistantCard from "@/components/plan/LiveAssistantCard";
+import DateRouletteCard from "@/components/plan/DateRouletteCard";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { generatePlan, predictVibe, savePlan, surpriseMe, type Mood, type Plan, type VibePrediction } from "@/lib/api";
