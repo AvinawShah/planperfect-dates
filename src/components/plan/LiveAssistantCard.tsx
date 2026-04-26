@@ -104,15 +104,15 @@ const LiveAssistantCard = ({ plan, onApplyUpdatedPlan }: Props) => {
         <div className="grid sm:grid-cols-2 gap-5">
           <div>
             <label className="text-xs font-semibold text-foreground/70 uppercase tracking-wider mb-2 block">Your mood</label>
-            <Pill options={moods} value={userMood} onChange={setUserMood} />
+            <Pill options={moods} value={userMood} onChange={(v) => setUserMood(v)} />
           </div>
           <div>
             <label className="text-xs font-semibold text-foreground/70 uppercase tracking-wider mb-2 block">Weather</label>
-            <Pill options={weathers} value={weather} onChange={setWeather} />
+            <Pill options={weathers} value={weather} onChange={(v) => setWeather(v)} />
           </div>
           <div>
             <label className="text-xs font-semibold text-foreground/70 uppercase tracking-wider mb-2 block">Crowd level</label>
-            <Pill options={crowds} value={crowdLevel} onChange={setCrowdLevel} />
+            <Pill options={crowds} value={crowdLevel} onChange={(v) => setCrowdLevel(v)} />
           </div>
           <div className="flex items-end">
             <label className={`flex items-center gap-3 rounded-2xl border px-4 py-2.5 cursor-pointer transition w-full ${
