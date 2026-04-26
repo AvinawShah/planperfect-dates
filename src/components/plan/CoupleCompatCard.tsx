@@ -219,7 +219,7 @@ const CoupleCompatCard = ({ city, area, startTime, durationHours }: Props) => {
   const scoreNum = result ? parseInt(result.compatibility.score) || 0 : 0;
 
   return (
-    <section className="container-narrow pb-16">
+    <section>
       <div className="mb-5">
         <p className="text-sm tracking-widest uppercase text-primary mb-2 flex items-center gap-1.5">
           <Users className="h-3.5 w-3.5" /> Couple compatibility
