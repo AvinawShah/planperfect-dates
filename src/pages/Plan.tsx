@@ -324,6 +324,12 @@ const PlanPage = () => {
               <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="space-y-6">
                 <ItineraryView plan={plan} onSave={handleSave} onShare={handleShare} saved={saved} />
                 <DateStoryCard plan={plan} />
+                <CoupleCompatCard
+                  city={location.city}
+                  area={location.area}
+                  startTime={startTime}
+                  durationHours={duration}
+                />
               </motion.div>
             )}
             {!loading && !plan && <EmptyState />}
@@ -339,14 +345,6 @@ const PlanPage = () => {
           </div>
           <NearbyCafes lat={location.lat} lng={location.lng} label={location.label} />
         </section>
-
-        {/* Couple compatibility */}
-        <CoupleCompatCard
-          city={location.city}
-          area={location.area}
-          startTime={startTime}
-          durationHours={duration}
-        />
 
         {/* Nearby map — real OpenStreetMap data, no API key */}
         <section className="container-narrow pb-16">
