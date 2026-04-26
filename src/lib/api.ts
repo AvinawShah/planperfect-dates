@@ -273,6 +273,32 @@ export async function generateCoupleCompat(input: {
     throw new Error((data as { error: string }).error);
   }
   return data as CoupleCompat;
+
+// --- Date Roulette ---
+export interface RouletteResult {
+  roulette: {
+    activity: { title: string; description: string; estimatedCost: number; emoji: string };
+    food: { type: string; suggestion: string; estimatedCost: number; emoji: string };
+    challenge: { title: string; instruction: string; funLevel: "low" | "medium" | "high"; emoji: string };
+  };
+  totalEstimatedCost: number;
+  vibe: string;
+  assistantNote: string;
+}
+
+export async function spinDateRoulette(input: {
+  budget: number;
+  mood?: string;
+  city?: string;
+  area?: string;
+  preferences?: string[];
+}): Promise<RouletteResult> {
+  const { data, error } = await supabase.functions.invoke("date-roulette", { body: input });
+  if (error) throw error;
+  if (data && typeof data === "object" && "error" in data) {
+    throw new Error((data as { error: string }).error);
+  }
+  return data as RouletteResult;
 }
 
 // --- Live AI assistant ---
