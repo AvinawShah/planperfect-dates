@@ -26,6 +26,29 @@ const crowds: { v: "low" | "medium" | "high"; emoji: string; label: string }[] =
   { v: "high", emoji: "🔴", label: "High" },
 ];
 
+function Pill<T extends string>({
+  options, value, onChange,
+}: { options: { v: T; emoji: string; label: string }[]; value: T; onChange: (v: T) => void }) {
+  return (
+    <div className="flex flex-wrap gap-2">
+      {options.map((o) => (
+        <button
+          key={o.v}
+          type="button"
+          onClick={() => onChange(o.v)}
+          className={`rounded-full border px-3 py-1.5 text-xs font-medium transition active:scale-95 ${
+            value === o.v
+              ? "border-transparent bg-gradient-rose text-primary-foreground shadow-pop"
+              : "border-border bg-card hover:border-primary/40 hover:bg-primary-soft/30"
+          }`}
+        >
+          <span className="mr-1">{o.emoji}</span>{o.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 const LiveAssistantCard = ({ plan, onApplyUpdatedPlan }: Props) => {
   const [runningLate, setRunningLate] = useState(false);
   const [userMood, setUserMood] = useState<"tired" | "excited" | "neutral">("neutral");
