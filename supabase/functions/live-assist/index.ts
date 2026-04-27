@@ -26,9 +26,11 @@ interface Payload {
   plan: PlanStep[];
   currentTime?: string;
   runningLate?: boolean;
+  delayMinutes?: number;
   userMood?: "tired" | "excited" | "neutral" | string;
   weather?: "sunny" | "rainy" | "cloudy" | string;
   crowdLevel?: "low" | "medium" | "high" | string;
+  trafficLevel?: "low" | "medium" | "high" | string;
   area?: string;
   city?: string;
   budget?: number;
