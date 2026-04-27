@@ -96,8 +96,7 @@ const Journey = () => {
 
   const W = 1100;
   const H = 560;
-  const visibleStops = useMemo(() => visibleIndices.map((i) => stops[i]), [visibleIndices, stops]);
-  const positions = useMemo(() => layoutPositions(visibleStops.length, W, H), [visibleStops.length]);
+  const positions = useMemo(() => layoutPositions(stops.length, W, H), [stops.length]);
 
   /* ---------- AI generate ---------- */
   async function handleGenerate() {
