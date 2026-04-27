@@ -51,9 +51,11 @@ function Pill<T extends string>({
 
 const LiveAssistantCard = ({ plan, onApplyUpdatedPlan }: Props) => {
   const [runningLate, setRunningLate] = useState(false);
+  const [delayMinutes, setDelayMinutes] = useState(15);
   const [userMood, setUserMood] = useState<"tired" | "excited" | "neutral">("neutral");
   const [weather, setWeather] = useState<"sunny" | "rainy" | "cloudy">("sunny");
   const [crowdLevel, setCrowdLevel] = useState<"low" | "medium" | "high">("low");
+  const [trafficLevel, setTrafficLevel] = useState<"low" | "medium" | "high">("low");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<LiveAdaptation | null>(null);
 
@@ -63,7 +65,10 @@ const LiveAssistantCard = ({ plan, onApplyUpdatedPlan }: Props) => {
       const now = new Date();
       const currentTime = `${now.getHours().toString().padStart(2, "0")}:${now.getMinutes().toString().padStart(2, "0")}`;
       const r = await adaptPlanLive(plan, {
-        currentTime, runningLate, userMood, weather, crowdLevel,
+        currentTime,
+        runningLate,
+        delayMinutes: runningLate ? delayMinutes : 0,
+        userMood, weather, crowdLevel, trafficLevel,
         city: plan.location,
       });
       setResult(r);
