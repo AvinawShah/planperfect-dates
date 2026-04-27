@@ -46,6 +46,11 @@ const TOOL = {
       type: "object",
       properties: {
         status: { type: "string", enum: ["updated", "unchanged"] },
+        detectedIssues: {
+          type: "array",
+          items: { type: "string" },
+          description: "Short bullet list of detected real-world issues (e.g. 'Running late by 20 minutes', 'High crowd at current location').",
+        },
         changes: {
           type: "array",
           items: {
@@ -77,8 +82,9 @@ const TOOL = {
           },
         },
         assistantMessage: { type: "string", description: "Short, friendly suggestion (<160 chars)." },
+        nextBestAction: { type: "string", description: "One concrete immediate step the couple should take right now (<120 chars)." },
       },
-      required: ["status", "changes", "updatedPlan", "assistantMessage"],
+      required: ["status", "detectedIssues", "changes", "updatedPlan", "assistantMessage", "nextBestAction"],
       additionalProperties: false,
     },
   },
