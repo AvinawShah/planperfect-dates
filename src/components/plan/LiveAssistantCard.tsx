@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Loader2, Radio, RefreshCw, Sparkles, Zap } from "lucide-react";
+import { AlertTriangle, ArrowRight, Loader2, Radio, RefreshCw, Sparkles, Zap } from "lucide-react";
 import { toast } from "sonner";
 import { adaptPlanLive, type LiveAdaptation, type Plan } from "@/lib/api";
 import { Button } from "@/components/ui/button";
