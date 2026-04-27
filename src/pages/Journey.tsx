@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { motion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import {
   Map as MapIcon,
   Clock,
@@ -84,6 +84,7 @@ const Journey = () => {
   const [openIdx, setOpenIdx] = useState<number | null>(null);
   const [playing, setPlaying] = useState(false);
   const [activeIdx, setActiveIdx] = useState<number | null>(null);
+  const [selectedDay, setSelectedDay] = useState<number | "all">("all");
 
   // form
   const [newPlace, setNewPlace] = useState("");
@@ -96,7 +97,43 @@ const Journey = () => {
 
   const W = 1100;
   const H = 560;
-  const positions = useMemo(() => layoutPositions(stops.length, W, H), [stops.length]);
+
+  /* ---------- group stops by date into "days" ---------- */
+  const days = useMemo(() => {
+    const map = new Map<string, number[]>();
+    stops.forEach((s, i) => {
+      const key = s.date || "__undated";
+      if (!map.has(key)) map.set(key, []);
+      map.get(key)!.push(i);
+    });
+    const sortedKeys = Array.from(map.keys()).sort((a, b) => {
+      if (a === "__undated") return 1;
+      if (b === "__undated") return -1;
+      return a.localeCompare(b);
+    });
+    return sortedKeys.map((key, n) => ({
+      key,
+      label: `Day ${n + 1}`,
+      date: key === "__undated" ? "Undated" : key,
+      indices: map.get(key)!,
+    }));
+  }, [stops]);
+
+  // visible indices based on day selection
+  const visibleIndices = useMemo(() => {
+    if (selectedDay === "all") return stops.map((_, i) => i);
+    return days[selectedDay]?.indices ?? [];
+  }, [selectedDay, days, stops]);
+
+  const visibleStops = useMemo(
+    () => visibleIndices.map((i) => stops[i]),
+    [visibleIndices, stops],
+  );
+
+  const positions = useMemo(
+    () => layoutPositions(visibleIndices.length, W, H),
+    [visibleIndices.length],
+  );
 
   /* ---------- AI generate ---------- */
   async function handleGenerate() {
@@ -221,17 +258,39 @@ const Journey = () => {
               </Button>
             </div>
 
+            {/* DAY SELECTOR — only show if more than 1 day */}
+            {days.length > 1 && (
+              <DaySelector
+                days={days}
+                selected={selectedDay}
+                onSelect={(d) => {
+                  setSelectedDay(d);
+                  setActiveIdx(null);
+                }}
+              />
+            )}
+
             {/* MAP VIEW */}
             <TabsContent value="map" className="mt-6">
-              <StyledMap
-                W={W}
-                H={H}
-                stops={stops}
-                positions={positions}
-                stopVisual={stopVisual}
-                activeIdx={activeIdx}
-                onMarker={(i) => setOpenIdx(i)}
-              />
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={String(selectedDay)}
+                  initial={{ opacity: 0, scale: 0.98, y: 8 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.98, y: -8 }}
+                  transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+                >
+                  <StyledMap
+                    W={W}
+                    H={H}
+                    stops={visibleStops}
+                    positions={positions}
+                    stopVisual={(localI) => stopVisual(visibleIndices[localI])}
+                    activeIdx={activeIdx}
+                    onMarker={(localI) => setOpenIdx(visibleIndices[localI])}
+                  />
+                </motion.div>
+              </AnimatePresence>
               {story?.insights?.length ? (
                 <div className="mt-6 flex flex-wrap gap-2">
                   {story.insights.map((tag, i) => (
@@ -245,12 +304,22 @@ const Journey = () => {
 
             {/* TIMELINE VIEW */}
             <TabsContent value="timeline" className="mt-6">
-              <TimelineView
-                stops={stops}
-                stopVisual={stopVisual}
-                activeIdx={activeIdx}
-                onOpen={(i) => setOpenIdx(i)}
-              />
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={String(selectedDay)}
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+                >
+                  <TimelineView
+                    stops={visibleStops}
+                    stopVisual={(localI) => stopVisual(visibleIndices[localI])}
+                    activeIdx={activeIdx}
+                    onOpen={(localI) => setOpenIdx(visibleIndices[localI])}
+                  />
+                </motion.div>
+              </AnimatePresence>
             </TabsContent>
 
             {/* STORY VIEW */}
@@ -324,6 +393,91 @@ const Journey = () => {
     </div>
   );
 };
+
+/* ============= DAY SELECTOR ============= */
+function DaySelector({
+  days,
+  selected,
+  onSelect,
+}: {
+  days: { key: string; label: string; date: string; indices: number[] }[];
+  selected: number | "all";
+  onSelect: (d: number | "all") => void;
+}) {
+  const fmt = (iso: string) => {
+    if (iso === "Undated") return "Undated";
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return iso;
+    return d.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
+  };
+
+  const pills: { id: number | "all"; label: string; sub: string; count: number }[] = [
+    { id: "all", label: "All days", sub: `${days.length} chapters`, count: days.reduce((a, d) => a + d.indices.length, 0) },
+    ...days.map((d, i) => ({ id: i as number | "all", label: d.label, sub: fmt(d.date), count: d.indices.length })),
+  ];
+
+  return (
+    <div className="mt-6">
+      <div className="flex items-center gap-2 mb-3">
+        <div className="h-px flex-1 bg-gradient-to-r from-transparent via-primary/30 to-transparent" />
+        <span className="text-[11px] uppercase tracking-[0.2em] text-primary font-medium">
+          {days.length} dates together
+        </span>
+        <div className="h-px flex-1 bg-gradient-to-r from-transparent via-primary/30 to-transparent" />
+      </div>
+
+      <div className="relative">
+        <div className="flex gap-3 overflow-x-auto pb-3 -mx-1 px-1 snap-x snap-mandatory scrollbar-thin">
+          {pills.map((p, idx) => {
+            const isActive = selected === p.id;
+            return (
+              <motion.button
+                key={String(p.id)}
+                onClick={() => onSelect(p.id)}
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: idx * 0.04, duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+                whileHover={{ y: -3, scale: 1.03 }}
+                whileTap={{ scale: 0.97 }}
+                className={`relative snap-start shrink-0 rounded-2xl px-5 py-3 text-left transition-all border ${
+                  isActive
+                    ? "bg-gradient-rose text-primary-foreground border-transparent shadow-glow"
+                    : "bg-card/70 backdrop-blur border-primary/15 text-foreground hover:border-primary/40"
+                }`}
+              >
+                {isActive && (
+                  <motion.span
+                    layoutId="dayPillGlow"
+                    className="absolute inset-0 rounded-2xl bg-gradient-aurora opacity-60 blur-xl -z-10"
+                    transition={{ type: "spring", stiffness: 200, damping: 25 }}
+                  />
+                )}
+                <div className="flex items-center gap-2">
+                  <span className={`text-[10px] uppercase tracking-widest ${isActive ? "text-primary-foreground/80" : "text-primary"}`}>
+                    {p.id === "all" ? "Overview" : `Chapter ${(p.id as number) + 1}`}
+                  </span>
+                  {isActive && (
+                    <motion.span
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      className="h-1.5 w-1.5 rounded-full bg-white"
+                    />
+                  )}
+                </div>
+                <div className="font-serif text-lg leading-tight mt-0.5 whitespace-nowrap">
+                  {p.label}
+                </div>
+                <div className={`text-[11px] mt-0.5 whitespace-nowrap ${isActive ? "text-primary-foreground/85" : "text-muted-foreground"}`}>
+                  {p.sub} · {p.count} {p.count === 1 ? "stop" : "stops"}
+                </div>
+              </motion.button>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 /* ============= STYLED MAP ============= */
 function StyledMap({
