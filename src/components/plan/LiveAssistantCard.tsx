@@ -119,14 +119,35 @@ const LiveAssistantCard = ({ plan, onApplyUpdatedPlan }: Props) => {
             <label className="text-xs font-semibold text-foreground/70 uppercase tracking-wider mb-2 block">Crowd level</label>
             <Pill options={crowds} value={crowdLevel} onChange={(v) => setCrowdLevel(v)} />
           </div>
-          <div className="flex items-end">
-            <label className={`flex items-center gap-3 rounded-2xl border px-4 py-2.5 cursor-pointer transition w-full ${
-              runningLate ? "border-transparent bg-gradient-rose text-primary-foreground shadow-pop" : "border-border bg-card hover:border-primary/40"
-            }`}>
-              <input type="checkbox" className="sr-only" checked={runningLate} onChange={(e) => setRunningLate(e.target.checked)} />
+          <div>
+            <label className="text-xs font-semibold text-foreground/70 uppercase tracking-wider mb-2 block">Traffic level</label>
+            <Pill options={crowds} value={trafficLevel} onChange={(v) => setTrafficLevel(v)} />
+          </div>
+          <div className="sm:col-span-2 rounded-2xl border border-border bg-card/60 p-4 space-y-3">
+            <label className="flex items-center gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                className="h-4 w-4 accent-primary"
+                checked={runningLate}
+                onChange={(e) => setRunningLate(e.target.checked)}
+              />
               <span className="text-xl">⏱️</span>
               <span className="text-sm font-medium">Running late</span>
+              {runningLate && (
+                <span className="ml-auto text-xs font-semibold text-primary">~{delayMinutes} min behind</span>
+              )}
             </label>
+            {runningLate && (
+              <input
+                type="range"
+                min={5}
+                max={90}
+                step={5}
+                value={delayMinutes}
+                onChange={(e) => setDelayMinutes(Number(e.target.value))}
+                className="w-full accent-primary"
+              />
+            )}
           </div>
         </div>
 
