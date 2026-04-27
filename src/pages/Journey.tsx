@@ -84,6 +84,7 @@ const Journey = () => {
   const [openIdx, setOpenIdx] = useState<number | null>(null);
   const [playing, setPlaying] = useState(false);
   const [activeIdx, setActiveIdx] = useState<number | null>(null);
+  const [selectedDay, setSelectedDay] = useState<number | "all">("all");
 
   // form
   const [newPlace, setNewPlace] = useState("");
@@ -96,7 +97,43 @@ const Journey = () => {
 
   const W = 1100;
   const H = 560;
-  const positions = useMemo(() => layoutPositions(stops.length, W, H), [stops.length]);
+
+  /* ---------- group stops by date into "days" ---------- */
+  const days = useMemo(() => {
+    const map = new Map<string, number[]>();
+    stops.forEach((s, i) => {
+      const key = s.date || "__undated";
+      if (!map.has(key)) map.set(key, []);
+      map.get(key)!.push(i);
+    });
+    const sortedKeys = Array.from(map.keys()).sort((a, b) => {
+      if (a === "__undated") return 1;
+      if (b === "__undated") return -1;
+      return a.localeCompare(b);
+    });
+    return sortedKeys.map((key, n) => ({
+      key,
+      label: `Day ${n + 1}`,
+      date: key === "__undated" ? "Undated" : key,
+      indices: map.get(key)!,
+    }));
+  }, [stops]);
+
+  // visible indices based on day selection
+  const visibleIndices = useMemo(() => {
+    if (selectedDay === "all") return stops.map((_, i) => i);
+    return days[selectedDay]?.indices ?? [];
+  }, [selectedDay, days, stops]);
+
+  const visibleStops = useMemo(
+    () => visibleIndices.map((i) => stops[i]),
+    [visibleIndices, stops],
+  );
+
+  const positions = useMemo(
+    () => layoutPositions(visibleIndices.length, W, H),
+    [visibleIndices.length],
+  );
 
   /* ---------- AI generate ---------- */
   async function handleGenerate() {
