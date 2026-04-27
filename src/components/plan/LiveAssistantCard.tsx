@@ -171,6 +171,30 @@ const LiveAssistantCard = ({ plan, onApplyUpdatedPlan }: Props) => {
                 </p>
               </div>
 
+              {result.detectedIssues?.length > 0 && (
+                <div className="rounded-2xl border border-amber-200 bg-amber-50/70 p-4">
+                  <p className="text-xs uppercase tracking-widest text-amber-800 font-semibold mb-2 flex items-center gap-1.5">
+                    <AlertTriangle className="h-3.5 w-3.5" /> Detected issues
+                  </p>
+                  <ul className="space-y-1.5">
+                    {result.detectedIssues.map((iss, i) => (
+                      <li key={i} className="text-sm text-amber-900 flex gap-2">
+                        <span className="text-amber-600">•</span><span>{iss}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {result.nextBestAction && (
+                <div className="rounded-2xl border border-primary/20 bg-gradient-to-r from-primary-soft/60 to-transparent p-4">
+                  <p className="text-[10px] uppercase tracking-widest text-primary font-bold mb-1 flex items-center gap-1.5">
+                    <ArrowRight className="h-3 w-3" /> Next best action
+                  </p>
+                  <p className="text-sm font-medium text-foreground">{result.nextBestAction}</p>
+                </div>
+              )}
+
               {result.changes.length > 0 && (
                 <ul className="space-y-2">
                   {result.changes.map((c, i) => {
