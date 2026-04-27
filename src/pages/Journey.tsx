@@ -258,17 +258,39 @@ const Journey = () => {
               </Button>
             </div>
 
+            {/* DAY SELECTOR — only show if more than 1 day */}
+            {days.length > 1 && (
+              <DaySelector
+                days={days}
+                selected={selectedDay}
+                onSelect={(d) => {
+                  setSelectedDay(d);
+                  setActiveIdx(null);
+                }}
+              />
+            )}
+
             {/* MAP VIEW */}
             <TabsContent value="map" className="mt-6">
-              <StyledMap
-                W={W}
-                H={H}
-                stops={stops}
-                positions={positions}
-                stopVisual={stopVisual}
-                activeIdx={activeIdx}
-                onMarker={(i) => setOpenIdx(i)}
-              />
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={String(selectedDay)}
+                  initial={{ opacity: 0, scale: 0.98, y: 8 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.98, y: -8 }}
+                  transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+                >
+                  <StyledMap
+                    W={W}
+                    H={H}
+                    stops={visibleStops}
+                    positions={positions}
+                    stopVisual={(localI) => stopVisual(visibleIndices[localI])}
+                    activeIdx={activeIdx}
+                    onMarker={(localI) => setOpenIdx(visibleIndices[localI])}
+                  />
+                </motion.div>
+              </AnimatePresence>
               {story?.insights?.length ? (
                 <div className="mt-6 flex flex-wrap gap-2">
                   {story.insights.map((tag, i) => (
@@ -282,12 +304,22 @@ const Journey = () => {
 
             {/* TIMELINE VIEW */}
             <TabsContent value="timeline" className="mt-6">
-              <TimelineView
-                stops={stops}
-                stopVisual={stopVisual}
-                activeIdx={activeIdx}
-                onOpen={(i) => setOpenIdx(i)}
-              />
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={String(selectedDay)}
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+                >
+                  <TimelineView
+                    stops={visibleStops}
+                    stopVisual={(localI) => stopVisual(visibleIndices[localI])}
+                    activeIdx={activeIdx}
+                    onOpen={(localI) => setOpenIdx(visibleIndices[localI])}
+                  />
+                </motion.div>
+              </AnimatePresence>
             </TabsContent>
 
             {/* STORY VIEW */}
