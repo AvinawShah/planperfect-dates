@@ -107,10 +107,11 @@ Deno.serve(async (req) => {
 
     const ctx = [
       `Current time: ${p.currentTime || "unknown"}`,
-      `Running late: ${p.runningLate ? "yes" : "no"}`,
+      `Running late: ${p.runningLate ? "yes" : "no"}${typeof p.delayMinutes === "number" ? ` (by ~${p.delayMinutes} min)` : ""}`,
       `User mood: ${p.userMood || "neutral"}`,
       `Weather: ${p.weather || "unknown"}`,
       `Crowd level: ${p.crowdLevel || "unknown"}`,
+      `Traffic level: ${p.trafficLevel || "unknown"}`,
       p.area || p.city ? `Location: ${[p.area, p.city].filter(Boolean).join(", ")}` : "",
       p.budget ? `Budget cap: ₹${p.budget}` : "",
       "",
@@ -121,12 +122,20 @@ Deno.serve(async (req) => {
         : "",
     ].filter(Boolean).join("\n");
 
-    const systemPrompt = `You are DateCraft's real-time date assistant. Adapt the date plan based on live conditions:
-- Running late → skip or compress earlier steps
-- Bad weather → swap outdoor for indoor
-- Overcrowded → suggest a quieter nearby option
-- Mood changes → adjust intensity (tired = slower, excited = livelier)
-Keep the timeline logical, stay within budget, keep changes minimal. Always return the FULL updated plan (even unchanged steps). Use a warm, brief assistant tone.`;
+    const systemPrompt = `You are DateCraft's real-time date assistant guiding a couple mid-date.
+
+STEP 1 — DETECT problems from live context (lateness, rain, crowd, traffic, mood mismatch, budget risk).
+STEP 2 — DECIDE smart adaptations:
+  • Running late → skip/shorten/merge earlier steps
+  • Rain → swap outdoor for indoor
+  • Crowded → suggest a quieter nearby option
+  • Tired → reduce intensity, switch to chill
+  • Excited → keep or enhance energy
+  • Heavy traffic → prefer nearby options, push later steps
+STEP 3 — OPTIMIZE: keep timeline logical, stay within budget, smooth transitions, avoid unnecessary changes.
+STEP 4 — COMMUNICATE: friendly, human, encouraging, short and actionable.
+
+Always return the FULL updated plan (even unchanged steps), a clear list of detected issues, and one concrete nextBestAction the couple should do right now. If nothing needs changing, set status="unchanged", changes=[], and still echo the original plan.`;
 
     const aiRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
