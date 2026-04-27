@@ -306,9 +306,11 @@ export async function spinDateRoulette(input: {
 export interface LiveContext {
   currentTime?: string;
   runningLate?: boolean;
+  delayMinutes?: number;
   userMood?: "tired" | "excited" | "neutral";
   weather?: "sunny" | "rainy" | "cloudy";
   crowdLevel?: "low" | "medium" | "high";
+  trafficLevel?: "low" | "medium" | "high";
   area?: string;
   city?: string;
   budget?: number;
@@ -324,9 +326,11 @@ export interface LiveChange {
 
 export interface LiveAdaptation {
   status: "updated" | "unchanged";
+  detectedIssues: string[];
   changes: LiveChange[];
   updatedPlan: ItineraryItem[];
   assistantMessage: string;
+  nextBestAction: string;
 }
 
 export async function adaptPlanLive(plan: Plan, ctx: LiveContext): Promise<LiveAdaptation> {

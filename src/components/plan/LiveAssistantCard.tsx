@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Loader2, Radio, RefreshCw, Sparkles, Zap } from "lucide-react";
+import { AlertTriangle, ArrowRight, Loader2, Radio, RefreshCw, Sparkles, Zap } from "lucide-react";
 import { toast } from "sonner";
 import { adaptPlanLive, type LiveAdaptation, type Plan } from "@/lib/api";
 import { Button } from "@/components/ui/button";
@@ -51,9 +51,11 @@ function Pill<T extends string>({
 
 const LiveAssistantCard = ({ plan, onApplyUpdatedPlan }: Props) => {
   const [runningLate, setRunningLate] = useState(false);
+  const [delayMinutes, setDelayMinutes] = useState(15);
   const [userMood, setUserMood] = useState<"tired" | "excited" | "neutral">("neutral");
   const [weather, setWeather] = useState<"sunny" | "rainy" | "cloudy">("sunny");
   const [crowdLevel, setCrowdLevel] = useState<"low" | "medium" | "high">("low");
+  const [trafficLevel, setTrafficLevel] = useState<"low" | "medium" | "high">("low");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<LiveAdaptation | null>(null);
 
@@ -63,7 +65,10 @@ const LiveAssistantCard = ({ plan, onApplyUpdatedPlan }: Props) => {
       const now = new Date();
       const currentTime = `${now.getHours().toString().padStart(2, "0")}:${now.getMinutes().toString().padStart(2, "0")}`;
       const r = await adaptPlanLive(plan, {
-        currentTime, runningLate, userMood, weather, crowdLevel,
+        currentTime,
+        runningLate,
+        delayMinutes: runningLate ? delayMinutes : 0,
+        userMood, weather, crowdLevel, trafficLevel,
         city: plan.location,
       });
       setResult(r);
@@ -114,14 +119,35 @@ const LiveAssistantCard = ({ plan, onApplyUpdatedPlan }: Props) => {
             <label className="text-xs font-semibold text-foreground/70 uppercase tracking-wider mb-2 block">Crowd level</label>
             <Pill options={crowds} value={crowdLevel} onChange={(v) => setCrowdLevel(v)} />
           </div>
-          <div className="flex items-end">
-            <label className={`flex items-center gap-3 rounded-2xl border px-4 py-2.5 cursor-pointer transition w-full ${
-              runningLate ? "border-transparent bg-gradient-rose text-primary-foreground shadow-pop" : "border-border bg-card hover:border-primary/40"
-            }`}>
-              <input type="checkbox" className="sr-only" checked={runningLate} onChange={(e) => setRunningLate(e.target.checked)} />
+          <div>
+            <label className="text-xs font-semibold text-foreground/70 uppercase tracking-wider mb-2 block">Traffic level</label>
+            <Pill options={crowds} value={trafficLevel} onChange={(v) => setTrafficLevel(v)} />
+          </div>
+          <div className="sm:col-span-2 rounded-2xl border border-border bg-card/60 p-4 space-y-3">
+            <label className="flex items-center gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                className="h-4 w-4 accent-primary"
+                checked={runningLate}
+                onChange={(e) => setRunningLate(e.target.checked)}
+              />
               <span className="text-xl">⏱️</span>
               <span className="text-sm font-medium">Running late</span>
+              {runningLate && (
+                <span className="ml-auto text-xs font-semibold text-primary">~{delayMinutes} min behind</span>
+              )}
             </label>
+            {runningLate && (
+              <input
+                type="range"
+                min={5}
+                max={90}
+                step={5}
+                value={delayMinutes}
+                onChange={(e) => setDelayMinutes(Number(e.target.value))}
+                className="w-full accent-primary"
+              />
+            )}
           </div>
         </div>
 
@@ -144,6 +170,30 @@ const LiveAssistantCard = ({ plan, onApplyUpdatedPlan }: Props) => {
                   <span className="text-foreground/90">{result.assistantMessage}</span>
                 </p>
               </div>
+
+              {result.detectedIssues?.length > 0 && (
+                <div className="rounded-2xl border border-amber-200 bg-amber-50/70 p-4">
+                  <p className="text-xs uppercase tracking-widest text-amber-800 font-semibold mb-2 flex items-center gap-1.5">
+                    <AlertTriangle className="h-3.5 w-3.5" /> Detected issues
+                  </p>
+                  <ul className="space-y-1.5">
+                    {result.detectedIssues.map((iss, i) => (
+                      <li key={i} className="text-sm text-amber-900 flex gap-2">
+                        <span className="text-amber-600">•</span><span>{iss}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {result.nextBestAction && (
+                <div className="rounded-2xl border border-primary/20 bg-gradient-to-r from-primary-soft/60 to-transparent p-4">
+                  <p className="text-[10px] uppercase tracking-widest text-primary font-bold mb-1 flex items-center gap-1.5">
+                    <ArrowRight className="h-3 w-3" /> Next best action
+                  </p>
+                  <p className="text-sm font-medium text-foreground">{result.nextBestAction}</p>
+                </div>
+              )}
 
               {result.changes.length > 0 && (
                 <ul className="space-y-2">
