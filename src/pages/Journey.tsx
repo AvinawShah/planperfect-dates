@@ -84,34 +84,6 @@ const Journey = () => {
   const [openIdx, setOpenIdx] = useState<number | null>(null);
   const [playing, setPlaying] = useState(false);
   const [activeIdx, setActiveIdx] = useState<number | null>(null);
-  const [selectedDay, setSelectedDay] = useState<number | "all">("all");
-
-  /* ---------- group stops by date into Day 1, Day 2... ---------- */
-  const days = useMemo(() => {
-    // map of dateKey -> indices (in order of appearance). Stops without date get their own bucket.
-    const buckets: { key: string; label: string; indices: number[] }[] = [];
-    const keyToIdx = new Map<string, number>();
-    stops.forEach((s, i) => {
-      const key = s.date || `__nodate_${i}`;
-      if (!keyToIdx.has(key)) {
-        keyToIdx.set(key, buckets.length);
-        buckets.push({ key, label: s.date || "Undated", indices: [] });
-      }
-      buckets[keyToIdx.get(key)!].indices.push(i);
-    });
-    // sort buckets by date asc; undated stays after dated
-    buckets.sort((a, b) => {
-      const ad = a.key.startsWith("__nodate") ? "9999" : a.key;
-      const bd = b.key.startsWith("__nodate") ? "9999" : b.key;
-      return ad.localeCompare(bd);
-    });
-    return buckets;
-  }, [stops]);
-
-  const visibleIndices = useMemo(() => {
-    if (selectedDay === "all") return stops.map((_, i) => i);
-    return days[selectedDay]?.indices ?? [];
-  }, [selectedDay, days, stops]);
 
   // form
   const [newPlace, setNewPlace] = useState("");
@@ -124,8 +96,7 @@ const Journey = () => {
 
   const W = 1100;
   const H = 560;
-  const visibleStops = useMemo(() => visibleIndices.map((i) => stops[i]), [visibleIndices, stops]);
-  const positions = useMemo(() => layoutPositions(visibleStops.length, W, H), [visibleStops.length]);
+  const positions = useMemo(() => layoutPositions(stops.length, W, H), [stops.length]);
 
   /* ---------- AI generate ---------- */
   async function handleGenerate() {
@@ -250,68 +221,16 @@ const Journey = () => {
               </Button>
             </div>
 
-            {/* DAY PILLS — only meaningful when there are 2+ distinct days */}
-            {days.length > 1 && (
-              <div className="mt-5 flex flex-wrap items-center gap-2">
-                <span className="text-xs uppercase tracking-widest text-muted-foreground mr-1">
-                  Date day
-                </span>
-                <button
-                  onClick={() => setSelectedDay("all")}
-                  className={`rounded-full px-3.5 py-1.5 text-xs font-medium border transition-all ${
-                    selectedDay === "all"
-                      ? "bg-gradient-rose text-primary-foreground border-transparent shadow-glow"
-                      : "bg-background/70 border-primary/20 text-foreground/80 hover:border-primary/50"
-                  }`}
-                >
-                  All days · {stops.length}
-                </button>
-                {days.map((d, i) => {
-                  const active = selectedDay === i;
-                  const pretty = d.key.startsWith("__nodate")
-                    ? "Undated"
-                    : new Date(d.key).toLocaleDateString(undefined, { month: "short", day: "numeric" });
-                  return (
-                    <button
-                      key={d.key}
-                      onClick={() => setSelectedDay(i)}
-                      className={`rounded-full px-3.5 py-1.5 text-xs font-medium border transition-all flex items-center gap-1.5 ${
-                        active
-                          ? "bg-gradient-rose text-primary-foreground border-transparent shadow-glow"
-                          : "bg-background/70 border-primary/20 text-foreground/80 hover:border-primary/50"
-                      }`}
-                    >
-                      <span className="font-serif">Day {i + 1}</span>
-                      <span className={active ? "opacity-90" : "text-muted-foreground"}>· {pretty}</span>
-                      <span className={`ml-0.5 rounded-full px-1.5 text-[10px] ${active ? "bg-white/25" : "bg-primary/10"}`}>
-                        {d.indices.length}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-
             {/* MAP VIEW */}
             <TabsContent value="map" className="mt-6">
-              {selectedDay !== "all" && (
-                <div className="mb-4 flex items-center gap-2 text-sm">
-                  <span className="font-serif text-lg gradient-text">
-                    Day {(selectedDay as number) + 1}
-                  </span>
-                  <span className="text-muted-foreground">
-                    — {visibleStops.length} {visibleStops.length === 1 ? "place" : "places"} on this date
-                  </span>
-                </div>
-              )}
               <StyledMap
                 W={W}
                 H={H}
-                stops={visibleStops}
+                stops={stops}
                 positions={positions}
-                stopVisual={(i) => stopVisual(visibleIndices[i])}
-                activeIdx={activeIdx !== null ? visibleIndices.indexOf(activeIdx) : null}
-                onMarker={(i) => setOpenIdx(visibleIndices[i])}
+                stopVisual={stopVisual}
+                activeIdx={activeIdx}
+                onMarker={(i) => setOpenIdx(i)}
               />
               {story?.insights?.length ? (
                 <div className="mt-6 flex flex-wrap gap-2">
@@ -327,10 +246,10 @@ const Journey = () => {
             {/* TIMELINE VIEW */}
             <TabsContent value="timeline" className="mt-6">
               <TimelineView
-                stops={visibleStops}
-                stopVisual={(i) => stopVisual(visibleIndices[i])}
-                activeIdx={activeIdx !== null ? visibleIndices.indexOf(activeIdx) : null}
-                onOpen={(i) => setOpenIdx(visibleIndices[i])}
+                stops={stops}
+                stopVisual={stopVisual}
+                activeIdx={activeIdx}
+                onOpen={(i) => setOpenIdx(i)}
               />
             </TabsContent>
 
