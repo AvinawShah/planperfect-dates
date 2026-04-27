@@ -84,34 +84,6 @@ const Journey = () => {
   const [openIdx, setOpenIdx] = useState<number | null>(null);
   const [playing, setPlaying] = useState(false);
   const [activeIdx, setActiveIdx] = useState<number | null>(null);
-  const [selectedDay, setSelectedDay] = useState<number | "all">("all");
-
-  /* ---------- group stops by date into Day 1, Day 2... ---------- */
-  const days = useMemo(() => {
-    // map of dateKey -> indices (in order of appearance). Stops without date get their own bucket.
-    const buckets: { key: string; label: string; indices: number[] }[] = [];
-    const keyToIdx = new Map<string, number>();
-    stops.forEach((s, i) => {
-      const key = s.date || `__nodate_${i}`;
-      if (!keyToIdx.has(key)) {
-        keyToIdx.set(key, buckets.length);
-        buckets.push({ key, label: s.date || "Undated", indices: [] });
-      }
-      buckets[keyToIdx.get(key)!].indices.push(i);
-    });
-    // sort buckets by date asc; undated stays after dated
-    buckets.sort((a, b) => {
-      const ad = a.key.startsWith("__nodate") ? "9999" : a.key;
-      const bd = b.key.startsWith("__nodate") ? "9999" : b.key;
-      return ad.localeCompare(bd);
-    });
-    return buckets;
-  }, [stops]);
-
-  const visibleIndices = useMemo(() => {
-    if (selectedDay === "all") return stops.map((_, i) => i);
-    return days[selectedDay]?.indices ?? [];
-  }, [selectedDay, days, stops]);
 
   // form
   const [newPlace, setNewPlace] = useState("");
