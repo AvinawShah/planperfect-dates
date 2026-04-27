@@ -250,16 +250,68 @@ const Journey = () => {
               </Button>
             </div>
 
+            {/* DAY PILLS — only meaningful when there are 2+ distinct days */}
+            {days.length > 1 && (
+              <div className="mt-5 flex flex-wrap items-center gap-2">
+                <span className="text-xs uppercase tracking-widest text-muted-foreground mr-1">
+                  Date day
+                </span>
+                <button
+                  onClick={() => setSelectedDay("all")}
+                  className={`rounded-full px-3.5 py-1.5 text-xs font-medium border transition-all ${
+                    selectedDay === "all"
+                      ? "bg-gradient-rose text-primary-foreground border-transparent shadow-glow"
+                      : "bg-background/70 border-primary/20 text-foreground/80 hover:border-primary/50"
+                  }`}
+                >
+                  All days · {stops.length}
+                </button>
+                {days.map((d, i) => {
+                  const active = selectedDay === i;
+                  const pretty = d.key.startsWith("__nodate")
+                    ? "Undated"
+                    : new Date(d.key).toLocaleDateString(undefined, { month: "short", day: "numeric" });
+                  return (
+                    <button
+                      key={d.key}
+                      onClick={() => setSelectedDay(i)}
+                      className={`rounded-full px-3.5 py-1.5 text-xs font-medium border transition-all flex items-center gap-1.5 ${
+                        active
+                          ? "bg-gradient-rose text-primary-foreground border-transparent shadow-glow"
+                          : "bg-background/70 border-primary/20 text-foreground/80 hover:border-primary/50"
+                      }`}
+                    >
+                      <span className="font-serif">Day {i + 1}</span>
+                      <span className={active ? "opacity-90" : "text-muted-foreground"}>· {pretty}</span>
+                      <span className={`ml-0.5 rounded-full px-1.5 text-[10px] ${active ? "bg-white/25" : "bg-primary/10"}`}>
+                        {d.indices.length}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+
             {/* MAP VIEW */}
             <TabsContent value="map" className="mt-6">
+              {selectedDay !== "all" && (
+                <div className="mb-4 flex items-center gap-2 text-sm">
+                  <span className="font-serif text-lg gradient-text">
+                    Day {(selectedDay as number) + 1}
+                  </span>
+                  <span className="text-muted-foreground">
+                    — {visibleStops.length} {visibleStops.length === 1 ? "place" : "places"} on this date
+                  </span>
+                </div>
+              )}
               <StyledMap
                 W={W}
                 H={H}
-                stops={stops}
+                stops={visibleStops}
                 positions={positions}
-                stopVisual={stopVisual}
-                activeIdx={activeIdx}
-                onMarker={(i) => setOpenIdx(i)}
+                stopVisual={(i) => stopVisual(visibleIndices[i])}
+                activeIdx={activeIdx !== null ? visibleIndices.indexOf(activeIdx) : null}
+                onMarker={(i) => setOpenIdx(visibleIndices[i])}
               />
               {story?.insights?.length ? (
                 <div className="mt-6 flex flex-wrap gap-2">
@@ -275,10 +327,10 @@ const Journey = () => {
             {/* TIMELINE VIEW */}
             <TabsContent value="timeline" className="mt-6">
               <TimelineView
-                stops={stops}
-                stopVisual={stopVisual}
-                activeIdx={activeIdx}
-                onOpen={(i) => setOpenIdx(i)}
+                stops={visibleStops}
+                stopVisual={(i) => stopVisual(visibleIndices[i])}
+                activeIdx={activeIdx !== null ? visibleIndices.indexOf(activeIdx) : null}
+                onOpen={(i) => setOpenIdx(visibleIndices[i])}
               />
             </TabsContent>
 
