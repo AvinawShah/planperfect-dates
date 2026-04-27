@@ -394,6 +394,91 @@ const Journey = () => {
   );
 };
 
+/* ============= DAY SELECTOR ============= */
+function DaySelector({
+  days,
+  selected,
+  onSelect,
+}: {
+  days: { key: string; label: string; date: string; indices: number[] }[];
+  selected: number | "all";
+  onSelect: (d: number | "all") => void;
+}) {
+  const fmt = (iso: string) => {
+    if (iso === "Undated") return "Undated";
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return iso;
+    return d.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
+  };
+
+  const pills: { id: number | "all"; label: string; sub: string; count: number }[] = [
+    { id: "all", label: "All days", sub: `${days.length} chapters`, count: days.reduce((a, d) => a + d.indices.length, 0) },
+    ...days.map((d, i) => ({ id: i as number | "all", label: d.label, sub: fmt(d.date), count: d.indices.length })),
+  ];
+
+  return (
+    <div className="mt-6">
+      <div className="flex items-center gap-2 mb-3">
+        <div className="h-px flex-1 bg-gradient-to-r from-transparent via-primary/30 to-transparent" />
+        <span className="text-[11px] uppercase tracking-[0.2em] text-primary font-medium">
+          {days.length} dates together
+        </span>
+        <div className="h-px flex-1 bg-gradient-to-r from-transparent via-primary/30 to-transparent" />
+      </div>
+
+      <div className="relative">
+        <div className="flex gap-3 overflow-x-auto pb-3 -mx-1 px-1 snap-x snap-mandatory scrollbar-thin">
+          {pills.map((p, idx) => {
+            const isActive = selected === p.id;
+            return (
+              <motion.button
+                key={String(p.id)}
+                onClick={() => onSelect(p.id)}
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: idx * 0.04, duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+                whileHover={{ y: -3, scale: 1.03 }}
+                whileTap={{ scale: 0.97 }}
+                className={`relative snap-start shrink-0 rounded-2xl px-5 py-3 text-left transition-all border ${
+                  isActive
+                    ? "bg-gradient-rose text-primary-foreground border-transparent shadow-glow"
+                    : "bg-card/70 backdrop-blur border-primary/15 text-foreground hover:border-primary/40"
+                }`}
+              >
+                {isActive && (
+                  <motion.span
+                    layoutId="dayPillGlow"
+                    className="absolute inset-0 rounded-2xl bg-gradient-aurora opacity-60 blur-xl -z-10"
+                    transition={{ type: "spring", stiffness: 200, damping: 25 }}
+                  />
+                )}
+                <div className="flex items-center gap-2">
+                  <span className={`text-[10px] uppercase tracking-widest ${isActive ? "text-primary-foreground/80" : "text-primary"}`}>
+                    {p.id === "all" ? "Overview" : `Chapter ${(p.id as number) + 1}`}
+                  </span>
+                  {isActive && (
+                    <motion.span
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      className="h-1.5 w-1.5 rounded-full bg-white"
+                    />
+                  )}
+                </div>
+                <div className="font-serif text-lg leading-tight mt-0.5 whitespace-nowrap">
+                  {p.label}
+                </div>
+                <div className={`text-[11px] mt-0.5 whitespace-nowrap ${isActive ? "text-primary-foreground/85" : "text-muted-foreground"}`}>
+                  {p.sub} · {p.count} {p.count === 1 ? "stop" : "stops"}
+                </div>
+              </motion.button>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /* ============= STYLED MAP ============= */
 function StyledMap({
   W, H, stops, positions, stopVisual, activeIdx, onMarker,
