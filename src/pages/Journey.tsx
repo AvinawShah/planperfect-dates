@@ -275,21 +275,40 @@ const Journey = () => {
             <TabsContent value="map" className="mt-6">
               <AnimatePresence mode="wait">
                 <motion.div
-                  key={String(selectedDay)}
+                  key={String(selectedDay) + "-" + Array.from(expandedDays).sort().join(",")}
                   initial={{ opacity: 0, scale: 0.98, y: 8 }}
                   animate={{ opacity: 1, scale: 1, y: 0 }}
                   exit={{ opacity: 0, scale: 0.98, y: -8 }}
                   transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
                 >
-                  <StyledMap
-                    W={W}
-                    H={H}
-                    stops={visibleStops}
-                    positions={positions}
-                    stopVisual={(localI) => stopVisual(visibleIndices[localI])}
-                    activeIdx={activeIdx}
-                    onMarker={(localI) => setOpenIdx(visibleIndices[localI])}
-                  />
+                  {selectedDay === "all" && days.length > 1 ? (
+                    <DayClusterMap
+                      W={W}
+                      H={H}
+                      days={days}
+                      stops={stops}
+                      stopVisual={stopVisual}
+                      expandedDays={expandedDays}
+                      onToggleDay={(i) =>
+                        setExpandedDays((prev) => {
+                          const next = new Set(prev);
+                          next.has(i) ? next.delete(i) : next.add(i);
+                          return next;
+                        })
+                      }
+                      onMarker={(i) => setOpenIdx(i)}
+                    />
+                  ) : (
+                    <StyledMap
+                      W={W}
+                      H={H}
+                      stops={visibleStops}
+                      positions={positions}
+                      stopVisual={(localI) => stopVisual(visibleIndices[localI])}
+                      activeIdx={activeIdx}
+                      onMarker={(localI) => setOpenIdx(visibleIndices[localI])}
+                    />
+                  )}
                 </motion.div>
               </AnimatePresence>
               {story?.insights?.length ? (
