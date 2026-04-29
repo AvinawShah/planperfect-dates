@@ -18,6 +18,25 @@ interface Props {
 const ItineraryView = ({ plan, onSave, onShare, saved }: Props) => {
   const cardRef = useRef<HTMLDivElement>(null);
   const [exporting, setExporting] = useState(false);
+  const [addedToJourney, setAddedToJourney] = useState(false);
+
+  function handleAddToJourney() {
+    const today = new Date().toISOString().slice(0, 10);
+    const newStops: JourneyStopInput[] = plan.itinerary.map((it) => ({
+      place: it.place,
+      date: today,
+      activity: it.activity,
+      mood: plan.mood,
+      notes: it.note,
+    }));
+    const existing = getJourneyStops();
+    const key = (s: JourneyStopInput) => `${s.place}|${s.date}`;
+    const seen = new Set(existing.map(key));
+    const merged = [...existing, ...newStops.filter((s) => !seen.has(key(s)))];
+    saveJourneyStops(merged);
+    setAddedToJourney(true);
+    toast.success("Added to Our Journey 💕");
+  }
 
   async function handleExportImage() {
     if (!cardRef.current) return;
