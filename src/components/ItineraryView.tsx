@@ -96,6 +96,15 @@ const ItineraryView = ({ plan, onSave, onShare, saved }: Props) => {
                 <Share2 className="h-4 w-4" /> Share
               </Button>
             )}
+            <Button onClick={handleAddToJourney} variant="soft" size="sm" className="bg-white/90" disabled={addedToJourney}>
+              <MapPin className="h-4 w-4" />
+              {addedToJourney ? "Added ✓" : "Add to Journey"}
+            </Button>
+            {addedToJourney && (
+              <Button asChild variant="outline" size="sm" className="bg-white/90 border-white/40">
+                <Link to="/journey">View Journey →</Link>
+              </Button>
+            )}
           </div>
         </div>
       </header>
