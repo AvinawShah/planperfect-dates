@@ -16,7 +16,7 @@ const Navbar = () => {
   return (
     <header className="sticky top-0 z-50 glass border-b border-primary/10">
       <div className="container-narrow flex items-center justify-between h-16">
-        <Link to="/" className="flex items-center gap-2 group">
+        <Link to="/home" className="flex items-center gap-2 group">
           <span className="relative flex h-9 w-9 items-center justify-center rounded-full bg-gradient-rose shadow-soft">
             <Heart className="h-4 w-4 text-primary-foreground" fill="currentColor" />
           </span>
@@ -27,7 +27,7 @@ const Navbar = () => {
 
         <nav className="hidden md:flex items-center gap-8 text-sm">
           {[
-            { to: "/", label: "Home" },
+            { to: "/home", label: "Home" },
             { to: "/plan", label: "Plan a date" },
             { to: "/journey", label: "Our Journey", glow: true },
             { to: "/events", label: "Events" },
@@ -37,7 +37,7 @@ const Navbar = () => {
             <NavLink
               key={l.to}
               to={l.to}
-              end={l.to === "/"}
+              end={l.to === "/home"}
               className={({ isActive }) =>
                 l.glow
                   ? `relative inline-flex items-center gap-1 px-3 py-1.5 rounded-full font-medium transition-all ${
