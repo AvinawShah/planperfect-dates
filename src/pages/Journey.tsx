@@ -85,6 +85,7 @@ const Journey = () => {
   const [playing, setPlaying] = useState(false);
   const [activeIdx, setActiveIdx] = useState<number | null>(null);
   const [selectedDay, setSelectedDay] = useState<number | "all">("all");
+  const [expandedDays, setExpandedDays] = useState<Set<number>>(new Set());
 
   // form
   const [newPlace, setNewPlace] = useState("");
@@ -274,21 +275,40 @@ const Journey = () => {
             <TabsContent value="map" className="mt-6">
               <AnimatePresence mode="wait">
                 <motion.div
-                  key={String(selectedDay)}
+                  key={String(selectedDay) + "-" + Array.from(expandedDays).sort().join(",")}
                   initial={{ opacity: 0, scale: 0.98, y: 8 }}
                   animate={{ opacity: 1, scale: 1, y: 0 }}
                   exit={{ opacity: 0, scale: 0.98, y: -8 }}
                   transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
                 >
-                  <StyledMap
-                    W={W}
-                    H={H}
-                    stops={visibleStops}
-                    positions={positions}
-                    stopVisual={(localI) => stopVisual(visibleIndices[localI])}
-                    activeIdx={activeIdx}
-                    onMarker={(localI) => setOpenIdx(visibleIndices[localI])}
-                  />
+                  {selectedDay === "all" && days.length > 1 ? (
+                    <DayClusterMap
+                      W={W}
+                      H={H}
+                      days={days}
+                      stops={stops}
+                      stopVisual={stopVisual}
+                      expandedDays={expandedDays}
+                      onToggleDay={(i) =>
+                        setExpandedDays((prev) => {
+                          const next = new Set(prev);
+                          next.has(i) ? next.delete(i) : next.add(i);
+                          return next;
+                        })
+                      }
+                      onMarker={(i) => setOpenIdx(i)}
+                    />
+                  ) : (
+                    <StyledMap
+                      W={W}
+                      H={H}
+                      stops={visibleStops}
+                      positions={positions}
+                      stopVisual={(localI) => stopVisual(visibleIndices[localI])}
+                      activeIdx={activeIdx}
+                      onMarker={(localI) => setOpenIdx(visibleIndices[localI])}
+                    />
+                  )}
                 </motion.div>
               </AnimatePresence>
               {story?.insights?.length ? (
@@ -474,6 +494,233 @@ function DaySelector({
             );
           })}
         </div>
+      </div>
+    </div>
+  );
+}
+
+/* ============= DAY CLUSTER MAP =============
+   Shows one bubble per day; expanded days reveal their individual stops
+   arranged around the day node. Travel paths connect consecutive days. */
+function DayClusterMap({
+  W, H, days, stops, stopVisual, expandedDays, onToggleDay, onMarker,
+}: {
+  W: number; H: number;
+  days: { key: string; label: string; date: string; indices: number[] }[];
+  stops: JourneyStopInput[];
+  stopVisual: (i: number) => { icon: string; importance: "low" | "medium" | "high"; pathStyle: "dotted" | "smooth" | "glowing"; memory?: string; moodEmoji?: string };
+  expandedDays: Set<number>;
+  onToggleDay: (i: number) => void;
+  onMarker: (i: number) => void;
+}) {
+  // one center per day, wandering across the canvas
+  const dayCenters = useMemo(() => layoutPositions(days.length, W, H), [days.length, W, H]);
+
+  // satellite stop positions around an expanded day center
+  function satellitePositions(center: { x: number; y: number }, count: number, radius: number) {
+    if (count === 1) return [{ x: center.x, y: center.y - radius * 0.1 }];
+    return Array.from({ length: count }, (_, i) => {
+      const angle = (-Math.PI / 2) + (i / Math.max(count - 1, 1)) * Math.PI * 1.6;
+      return {
+        x: center.x + Math.cos(angle) * radius,
+        y: center.y + Math.sin(angle) * radius,
+      };
+    });
+  }
+
+  const fmtDate = (iso: string) => {
+    if (iso === "Undated") return "Undated";
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return iso;
+    return d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+  };
+
+  return (
+    <div className="relative rounded-[2rem] overflow-hidden border border-primary/15 shadow-glow bg-gradient-aurora">
+      <div className="absolute inset-0 bg-gradient-to-br from-rose-100/40 via-fuchsia-100/30 to-violet-100/40 mix-blend-overlay" />
+      <div className="absolute inset-0 [background:radial-gradient(circle_at_20%_20%,hsl(var(--primary-glow)/0.35),transparent_45%),radial-gradient(circle_at_80%_70%,hsl(var(--violet)/0.35),transparent_45%)]" />
+      {Array.from({ length: 22 }).map((_, i) => (
+        <span
+          key={i}
+          className="absolute h-1 w-1 rounded-full bg-white/80 animate-float-slow"
+          style={{
+            top: `${(i * 47) % 100}%`,
+            left: `${(i * 83) % 100}%`,
+            animationDelay: `${(i * 0.3) % 5}s`,
+            opacity: 0.5 + ((i * 13) % 50) / 100,
+          }}
+        />
+      ))}
+
+      <svg viewBox={`0 0 ${W} ${H}`} className="relative w-full h-auto block" preserveAspectRatio="xMidYMid meet">
+        <defs>
+          <linearGradient id="dayPathGradient" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stopColor="hsl(340 95% 75%)" />
+            <stop offset="50%" stopColor="hsl(320 80% 60%)" />
+            <stop offset="100%" stopColor="hsl(280 80% 65%)" />
+          </linearGradient>
+          <linearGradient id="dayGlowPath" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stopColor="hsl(45 100% 75%)" />
+            <stop offset="50%" stopColor="hsl(340 95% 70%)" />
+            <stop offset="100%" stopColor="hsl(280 80% 65%)" />
+          </linearGradient>
+          <filter id="daySoftGlow" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur stdDeviation="6" result="blur" />
+            <feMerge>
+              <feMergeNode in="blur" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
+        </defs>
+
+        {/* travel paths between consecutive days */}
+        {dayCenters.slice(1).map((p, i) => {
+          const a = dayCenters[i];
+          const b = p;
+          const d = pathBetween(a, b);
+          const mx = (a.x + b.x) / 2;
+          const my = (a.y + b.y) / 2 - Math.abs(b.x - a.x) * 0.09 - 18;
+          return (
+            <g key={`dp-${i}`}>
+              <path d={d} fill="none" stroke="url(#dayGlowPath)" strokeWidth={11} strokeLinecap="round" opacity={0.28} filter="url(#daySoftGlow)" />
+              <path
+                d={d}
+                fill="none"
+                stroke="url(#dayPathGradient)"
+                strokeWidth={4}
+                strokeLinecap="round"
+                strokeDasharray="10 8"
+              >
+                <animate attributeName="stroke-dashoffset" from="0" to="-72" dur="3s" repeatCount="indefinite" />
+              </path>
+              {/* travel label */}
+              <g transform={`translate(${mx} ${my})`}>
+                <rect x={-46} y={-12} width={92} height={22} rx={11} fill="hsl(0 0% 100% / 0.9)" stroke="hsl(340 70% 80% / 0.6)" />
+                <text textAnchor="middle" y={3} fontSize={11} fontWeight={600} fill="hsl(340 35% 18%)">
+                  ✈️ next date →
+                </text>
+              </g>
+            </g>
+          );
+        })}
+
+        {/* day clusters */}
+        {dayCenters.map((center, di) => {
+          const day = days[di];
+          const isExpanded = expandedDays.has(di);
+          const stopCount = day.indices.length;
+          const sats = isExpanded ? satellitePositions(center, stopCount, 95) : [];
+
+          return (
+            <g key={`day-${di}`}>
+              {/* mini paths from day center to each satellite stop (when expanded) */}
+              {isExpanded &&
+                sats.map((s, k) => (
+                  <path
+                    key={`sat-path-${di}-${k}`}
+                    d={`M ${center.x} ${center.y} L ${s.x} ${s.y}`}
+                    stroke="hsl(340 70% 70% / 0.55)"
+                    strokeWidth={2}
+                    strokeDasharray="3 6"
+                    fill="none"
+                  />
+                ))}
+
+              {/* satellite stop markers */}
+              {isExpanded &&
+                sats.map((s, k) => {
+                  const stopIdx = day.indices[k];
+                  const v = stopVisual(stopIdx);
+                  const r = 20;
+                  return (
+                    <g
+                      key={`sat-${di}-${k}`}
+                      transform={`translate(${s.x} ${s.y})`}
+                      className="cursor-pointer"
+                      onClick={(e) => { e.stopPropagation(); onMarker(stopIdx); }}
+                    >
+                      <circle r={r + 6} fill="hsl(340 95% 75% / 0.3)" filter="url(#daySoftGlow)" />
+                      <circle r={r} fill="white" stroke="url(#dayPathGradient)" strokeWidth={2.5} />
+                      <text y={r * 0.35} textAnchor="middle" fontSize={r * 1.05} style={{ userSelect: "none" }}>
+                        {v.icon}
+                      </text>
+                      <g transform={`translate(0 ${r + 22})`}>
+                        <rect
+                          x={-Math.min(110, stops[stopIdx].place.length * 3.6 + 12)}
+                          y={-11}
+                          width={Math.min(220, stops[stopIdx].place.length * 7.2 + 24)}
+                          height={20}
+                          rx={10}
+                          fill="hsl(0 0% 100% / 0.92)"
+                          stroke="hsl(340 70% 80% / 0.6)"
+                        />
+                        <text textAnchor="middle" y={3.5} fontSize={10.5} fontWeight={600} fill="hsl(340 35% 18%)">
+                          {stops[stopIdx].place.length > 26 ? stops[stopIdx].place.slice(0, 24) + "…" : stops[stopIdx].place}
+                        </text>
+                      </g>
+                    </g>
+                  );
+                })}
+
+              {/* the DAY bubble itself */}
+              <g
+                transform={`translate(${center.x} ${center.y})`}
+                className="cursor-pointer"
+                onClick={() => onToggleDay(di)}
+              >
+                <circle r={isExpanded ? 30 : 44} fill="hsl(340 95% 70% / 0.18)">
+                  <animate attributeName="r" values={`${isExpanded ? 30 : 44};${isExpanded ? 38 : 54};${isExpanded ? 30 : 44}`} dur="2.4s" repeatCount="indefinite" />
+                </circle>
+                <circle r={isExpanded ? 26 : 38} fill="hsl(340 95% 75% / 0.4)" filter="url(#daySoftGlow)" />
+                <circle
+                  r={isExpanded ? 22 : 34}
+                  fill="white"
+                  stroke="url(#dayPathGradient)"
+                  strokeWidth={3.5}
+                />
+                <text
+                  y={isExpanded ? -2 : -4}
+                  textAnchor="middle"
+                  fontSize={isExpanded ? 11 : 13}
+                  fontWeight={700}
+                  fill="hsl(340 60% 35%)"
+                  style={{ userSelect: "none", textTransform: "uppercase", letterSpacing: "0.1em" }}
+                >
+                  {day.label}
+                </text>
+                {!isExpanded && (
+                  <text y={14} textAnchor="middle" fontSize={10} fill="hsl(340 30% 45%)" style={{ userSelect: "none" }}>
+                    {stopCount} {stopCount === 1 ? "stop" : "stops"}
+                  </text>
+                )}
+                {isExpanded && (
+                  <text y={10} textAnchor="middle" fontSize={9} fill="hsl(340 30% 45%)" style={{ userSelect: "none" }}>
+                    tap to close
+                  </text>
+                )}
+
+                {/* date pill below */}
+                <g transform={`translate(0 ${(isExpanded ? 22 : 34) + 18})`}>
+                  <rect x={-46} y={-11} width={92} height={22} rx={11} fill="hsl(340 60% 35%)" />
+                  <text textAnchor="middle" y={3.5} fontSize={11} fontWeight={600} fill="white">
+                    {fmtDate(day.date)}
+                  </text>
+                </g>
+              </g>
+            </g>
+          );
+        })}
+      </svg>
+
+      {/* hint */}
+      <div className="absolute top-4 left-4 glass rounded-full px-4 py-2 border border-white/40 text-xs flex items-center gap-2">
+        <Sparkles className="h-3 w-3 text-primary" />
+        Tap a day to reveal its places
+      </div>
+
+      <div className="absolute bottom-4 left-4 flex gap-3 text-xs glass rounded-full px-4 py-2 border border-white/40">
+        <span className="flex items-center gap-1.5"><span className="inline-block h-[3px] w-5 bg-gradient-aurora rounded shadow-glow" /> travel between dates</span>
+        <span className="flex items-center gap-1.5"><span className="inline-block h-[2px] w-5 border-t-2 border-dotted border-primary" /> stops within a day</span>
       </div>
     </div>
   );
