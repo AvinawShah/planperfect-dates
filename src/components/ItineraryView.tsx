@@ -1,9 +1,10 @@
 import { useRef, useState } from "react";
+import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Bookmark, Share2, Sparkles, Download, Loader2 } from "lucide-react";
+import { Bookmark, Share2, Sparkles, Download, Loader2, MapPin } from "lucide-react";
 import { toPng } from "html-to-image";
 import { toast } from "sonner";
-import type { Plan } from "@/lib/api";
+import { getJourneyStops, saveJourneyStops, type Plan, type JourneyStopInput } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import ShareableCard from "@/components/plan/ShareableCard";
 
