@@ -37,7 +37,7 @@ const Navbar = () => {
             <NavLink
               key={l.to}
               to={l.to}
-              end={l.to === "/"}
+              end={l.to === "/home"}
               className={({ isActive }) =>
                 l.glow
                   ? `relative inline-flex items-center gap-1 px-3 py-1.5 rounded-full font-medium transition-all ${
