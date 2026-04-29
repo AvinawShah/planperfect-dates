@@ -27,7 +27,7 @@ const Navbar = () => {
 
         <nav className="hidden md:flex items-center gap-8 text-sm">
           {[
-            { to: "/", label: "Home" },
+            { to: "/home", label: "Home" },
             { to: "/plan", label: "Plan a date" },
             { to: "/journey", label: "Our Journey", glow: true },
             { to: "/events", label: "Events" },
