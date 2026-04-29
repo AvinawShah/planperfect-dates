@@ -1,9 +1,10 @@
 import { useRef, useState } from "react";
+import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Bookmark, Share2, Sparkles, Download, Loader2 } from "lucide-react";
+import { Bookmark, Share2, Sparkles, Download, Loader2, MapPin } from "lucide-react";
 import { toPng } from "html-to-image";
 import { toast } from "sonner";
-import type { Plan } from "@/lib/api";
+import { getJourneyStops, saveJourneyStops, type Plan, type JourneyStopInput } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import ShareableCard from "@/components/plan/ShareableCard";
 
@@ -17,6 +18,25 @@ interface Props {
 const ItineraryView = ({ plan, onSave, onShare, saved }: Props) => {
   const cardRef = useRef<HTMLDivElement>(null);
   const [exporting, setExporting] = useState(false);
+  const [addedToJourney, setAddedToJourney] = useState(false);
+
+  function handleAddToJourney() {
+    const today = new Date().toISOString().slice(0, 10);
+    const newStops: JourneyStopInput[] = plan.itinerary.map((it) => ({
+      place: it.place,
+      date: today,
+      activity: it.activity,
+      mood: plan.mood,
+      notes: it.note,
+    }));
+    const existing = getJourneyStops();
+    const key = (s: JourneyStopInput) => `${s.place}|${s.date}`;
+    const seen = new Set(existing.map(key));
+    const merged = [...existing, ...newStops.filter((s) => !seen.has(key(s)))];
+    saveJourneyStops(merged);
+    setAddedToJourney(true);
+    toast.success("Added to Our Journey 💕");
+  }
 
   async function handleExportImage() {
     if (!cardRef.current) return;
@@ -74,6 +94,15 @@ const ItineraryView = ({ plan, onSave, onShare, saved }: Props) => {
             {onShare && (
               <Button onClick={onShare} variant="soft" size="sm" className="bg-white/90">
                 <Share2 className="h-4 w-4" /> Share
+              </Button>
+            )}
+            <Button onClick={handleAddToJourney} variant="soft" size="sm" className="bg-white/90" disabled={addedToJourney}>
+              <MapPin className="h-4 w-4" />
+              {addedToJourney ? "Added ✓" : "Add to Journey"}
+            </Button>
+            {addedToJourney && (
+              <Button asChild variant="outline" size="sm" className="bg-white/90 border-white/40">
+                <Link to="/journey">View Journey →</Link>
               </Button>
             )}
           </div>
