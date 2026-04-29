@@ -85,6 +85,7 @@ const Journey = () => {
   const [playing, setPlaying] = useState(false);
   const [activeIdx, setActiveIdx] = useState<number | null>(null);
   const [selectedDay, setSelectedDay] = useState<number | "all">("all");
+  const [expandedDays, setExpandedDays] = useState<Set<number>>(new Set());
 
   // form
   const [newPlace, setNewPlace] = useState("");
