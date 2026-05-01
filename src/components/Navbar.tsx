@@ -1,16 +1,34 @@
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import { Heart, LogOut, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { getCurrentUser, signOut } from "@/lib/api";
+import { onAuthChange, signOut, type AuthUser } from "@/lib/api";
+import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
 
 const Navbar = () => {
   const navigate = useNavigate();
-  const [user, setUser] = useState(getCurrentUser());
+  const [user, setUser] = useState<AuthUser | null>(null);
 
   useEffect(() => {
-    const i = setInterval(() => setUser(getCurrentUser()), 1000);
-    return () => clearInterval(i);
+    // Set up listener FIRST
+    const unsub = onAuthChange((u) => setUser(u));
+    // Then hydrate from existing session
+    supabase.auth.getSession().then(({ data }) => {
+      const u = data.session?.user;
+      if (u) {
+        const meta = (u.user_metadata || {}) as Record<string, unknown>;
+        setUser({
+          id: u.id,
+          email: u.email || "",
+          name:
+            (meta.display_name as string) ||
+            (meta.name as string) ||
+            (meta.full_name as string) ||
+            (u.email ? u.email.split("@")[0] : "Friend"),
+        });
+      }
+    });
+    return unsub;
   }, []);
 
   return (
@@ -58,14 +76,19 @@ const Navbar = () => {
           {user ? (
             <>
               <span className="hidden sm:inline text-sm text-muted-foreground">Hi, {user.name}</span>
-              <Button variant="ghost" size="icon" onClick={() => { signOut(); setUser(null); navigate("/"); }} aria-label="Sign out">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={async () => { await signOut(); navigate("/"); }}
+                aria-label="Sign out"
+              >
                 <LogOut />
               </Button>
             </>
           ) : (
             <>
               <Button asChild variant="ghost" size="sm" className="hidden sm:inline-flex">
-                <Link to="/login">Sign in</Link>
+                <Link to="/">Sign in</Link>
               </Button>
               <Button asChild variant="hero" size="sm">
                 <Link to="/plan">Plan a date</Link>
