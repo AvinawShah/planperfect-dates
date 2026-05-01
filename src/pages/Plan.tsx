@@ -394,7 +394,7 @@ const PlanPage = () => {
               </TabsTrigger>
             </TabsList>
             <TabsContent value="cafes" className="mt-0">
-              <NearbyCafes lat={location.lat} lng={location.lng} label={location.label} />
+              <NearbyCafes lat={location.lat} lng={location.lng} label={location.label} budget={budget} />
             </TabsContent>
             <TabsContent value="map" className="mt-0">
               <NearbyMap lat={location.lat} lng={location.lng} label={location.label} />

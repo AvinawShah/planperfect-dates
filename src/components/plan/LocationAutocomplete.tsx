@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Loader2, LocateFixed, MapPin, Search, X } from "lucide-react";
-import { nearestArea, popularCities, searchAreas, type AreaSuggestion } from "@/lib/locations";
+import { popularCities, searchAreas, type AreaSuggestion } from "@/lib/locations";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 interface Props {
@@ -8,12 +9,77 @@ interface Props {
   onChange: (a: AreaSuggestion) => void;
 }
 
+interface GPrediction {
+  placeId: string;
+  text: string;
+  main: string;
+  secondary: string;
+}
+
 const LocationAutocomplete = ({ value, onChange }: Props) => {
   const [query, setQuery] = useState(value?.label ?? "");
   const [open, setOpen] = useState(false);
   const [activeCity, setActiveCity] = useState<string>("Bengaluru");
   const [locating, setLocating] = useState(false);
+  const [searching, setSearching] = useState(false);
+  const [gResults, setGResults] = useState<GPrediction[]>([]);
   const wrapperRef = useRef<HTMLDivElement>(null);
+  const debounceRef = useRef<number | null>(null);
+  const reqRef = useRef(0);
+
+  // Debounced Google Places autocomplete
+  useEffect(() => {
+    const q = query.trim();
+    if (!q || (value && q === value.label)) {
+      setGResults([]);
+      return;
+    }
+    if (debounceRef.current) window.clearTimeout(debounceRef.current);
+    debounceRef.current = window.setTimeout(async () => {
+      const myReq = ++reqRef.current;
+      setSearching(true);
+      try {
+        const { data, error } = await supabase.functions.invoke("places", {
+          body: { action: "autocomplete", input: q },
+        });
+        if (myReq !== reqRef.current) return;
+        if (error) throw error;
+        setGResults(data?.predictions ?? []);
+      } catch (e) {
+        console.warn("autocomplete failed", e);
+      } finally {
+        if (myReq === reqRef.current) setSearching(false);
+      }
+    }, 250);
+    return () => {
+      if (debounceRef.current) window.clearTimeout(debounceRef.current);
+    };
+  }, [query, value]);
+
+  async function pickPrediction(p: GPrediction) {
+    try {
+      const { data, error } = await supabase.functions.invoke("places", {
+        body: { action: "details", placeId: p.placeId },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      const picked: AreaSuggestion = {
+        city: data.city || p.secondary || "",
+        area: data.name || p.main,
+        label: data.address || p.text,
+        lat: data.lat,
+        lng: data.lng,
+        blurb: data.address || "",
+        tags: ["google"],
+      };
+      onChange(picked);
+      setQuery(picked.label);
+      setOpen(false);
+    } catch (e) {
+      toast.error("Couldn't load that place. Try another.");
+      console.warn(e);
+    }
+  }
 
   async function useMyLocation() {
     if (!("geolocation" in navigator)) {
@@ -31,52 +97,32 @@ const LocationAutocomplete = ({ value, onChange }: Props) => {
       );
       const { latitude: lat, longitude: lng } = pos.coords;
 
-      // Reverse geocode via free Nominatim (no API key).
-      let cityName = "";
-      let areaName = "";
-      try {
-        const res = await fetch(
-          `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}&zoom=14&addressdetails=1`,
-          { headers: { "Accept-Language": "en" } },
-        );
-        if (res.ok) {
-          const data = await res.json();
-          const a = data.address || {};
-          cityName = a.city || a.town || a.state_district || a.state || "";
-          areaName = a.suburb || a.neighbourhood || a.city_district || a.locality || a.road || "";
-        }
-      } catch { /* nominatim is best-effort */ }
+      const { data, error } = await supabase.functions.invoke("places", {
+        body: { action: "reverse", lat, lng },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
 
-      // Snap to the nearest curated area so AI + map have a known anchor.
-      const { area: nearest, km } = nearestArea(lat, lng);
-
-      const picked: AreaSuggestion = km < 8
-        ? nearest
-        : {
-            city: cityName || nearest.city,
-            area: areaName || "Current location",
-            label: areaName && cityName ? `${areaName}, ${cityName}` : (cityName || "Current location"),
-            lat, lng,
-            blurb: "Detected from your device location",
-            tags: ["nearby"],
-          };
-
+      const picked: AreaSuggestion = {
+        city: data.city || "",
+        area: data.area || "Current location",
+        label: data.label,
+        lat: data.lat,
+        lng: data.lng,
+        blurb: "Detected from your device location",
+        tags: ["nearby"],
+      };
       onChange(picked);
       setQuery(picked.label);
       setOpen(false);
-      toast.success(
-        km < 8
-          ? `Detected ${picked.label} (snapped to nearest area)`
-          : `Using your location${cityName ? ` — ${cityName}` : ""}`,
-      );
+      toast.success(`Using your location — ${picked.area}`);
     } catch (err) {
-      const msg = (err as GeolocationPositionError)?.message || "Couldn't get your location.";
+      const msg = (err as Error)?.message || "Couldn't get your location.";
       toast.error(msg);
     } finally {
       setLocating(false);
     }
   }
-
 
   useEffect(() => {
     if (value) setQuery(value.label);
@@ -90,14 +136,12 @@ const LocationAutocomplete = ({ value, onChange }: Props) => {
     return () => document.removeEventListener("mousedown", onDocClick);
   }, []);
 
-  const results = useMemo(() => searchAreas(query, 8), [query]);
   const cityResults = useMemo(
     () => searchAreas("", 100).filter((a) => a.city === activeCity),
     [activeCity],
   );
 
-  const showSearch = query.trim().length > 0 && !value;
-  const list = showSearch ? results : cityResults;
+  const showSearch = query.trim().length > 0 && (!value || query !== value.label);
 
   return (
     <div ref={wrapperRef} className="relative">
@@ -120,19 +164,21 @@ const LocationAutocomplete = ({ value, onChange }: Props) => {
         <input
           type="text"
           value={query}
-          placeholder="Type a city or area…"
+          placeholder="Search any address, neighborhood, or landmark…"
           onFocus={() => setOpen(true)}
           onChange={(e) => {
             setQuery(e.target.value);
             setOpen(true);
-            if (value) onChange({ ...value, label: "" }); // clear selection when typing
           }}
           className="w-full rounded-xl border border-border bg-background pl-9 pr-9 py-2.5 text-sm focus:border-primary focus:outline-none"
         />
+        {searching && (
+          <Loader2 className="absolute right-9 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
+        )}
         {query && (
           <button
             type="button"
-            onClick={() => { setQuery(""); setOpen(true); }}
+            onClick={() => { setQuery(""); setGResults([]); setOpen(true); }}
             className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded-md hover:bg-muted"
             aria-label="Clear"
           >
@@ -162,12 +208,29 @@ const LocationAutocomplete = ({ value, onChange }: Props) => {
             </div>
           )}
           <ul className="max-h-72 overflow-y-auto py-1">
-            {list.length === 0 && (
+            {showSearch && gResults.length === 0 && !searching && (
               <li className="px-4 py-6 text-center text-sm text-muted-foreground">
-                No areas found. Try another keyword.
+                No matches. Try a different query.
               </li>
             )}
-            {list.map((a) => (
+
+            {showSearch && gResults.map((p) => (
+              <li key={p.placeId}>
+                <button
+                  type="button"
+                  onClick={() => pickPrediction(p)}
+                  className="w-full text-left px-4 py-2.5 hover:bg-accent/40 transition flex items-start gap-3"
+                >
+                  <MapPin className="h-4 w-4 text-primary mt-0.5 shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <div className="font-medium text-sm truncate">{p.main}</div>
+                    <div className="text-xs text-muted-foreground truncate">{p.secondary}</div>
+                  </div>
+                </button>
+              </li>
+            ))}
+
+            {!showSearch && cityResults.map((a) => (
               <li key={a.label}>
                 <button
                   type="button"
@@ -178,13 +241,6 @@ const LocationAutocomplete = ({ value, onChange }: Props) => {
                   <div className="flex-1 min-w-0">
                     <div className="font-medium text-sm truncate">{a.area}</div>
                     <div className="text-xs text-muted-foreground truncate">{a.blurb}</div>
-                    <div className="mt-1 flex flex-wrap gap-1">
-                      {a.tags.slice(0, 3).map((t) => (
-                        <span key={t} className="text-[10px] px-1.5 py-0.5 rounded-full bg-primary-soft/40 text-secondary-foreground">
-                          {t}
-                        </span>
-                      ))}
-                    </div>
                   </div>
                   <span className="text-xs text-muted-foreground shrink-0">{a.city}</span>
                 </button>
