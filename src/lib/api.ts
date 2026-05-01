@@ -437,16 +437,78 @@ export function deletePlan(id: string): void {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(getSavedPlans().filter((p) => p.id !== id)));
 }
 
-// --- Mock auth (until backend) ---
-const AUTH_KEY = "datecraft.user";
-export interface AuthUser { name: string; email: string; }
+// --- Real auth (Lovable Cloud / Supabase) ---
+import { lovable } from "@/integrations/lovable";
+import type { Session, User } from "@supabase/supabase-js";
 
-export function getCurrentUser(): AuthUser | null {
-  try { return JSON.parse(localStorage.getItem(AUTH_KEY) || "null"); } catch { return null; }
+export interface AuthUser { name: string; email: string; id: string; }
+
+function toAuthUser(u: User | null | undefined): AuthUser | null {
+  if (!u) return null;
+  const meta = (u.user_metadata || {}) as Record<string, unknown>;
+  const name =
+    (meta.display_name as string) ||
+    (meta.name as string) ||
+    (meta.full_name as string) ||
+    (u.email ? u.email.split("@")[0] : "Friend");
+  return { id: u.id, email: u.email || "", name };
 }
-export function signIn(email: string, name?: string): AuthUser {
-  const user = { name: name || email.split("@")[0], email };
-  localStorage.setItem(AUTH_KEY, JSON.stringify(user));
+
+export async function getCurrentUser(): Promise<AuthUser | null> {
+  const { data } = await supabase.auth.getUser();
+  return toAuthUser(data.user);
+}
+
+export function getCurrentSession(): Promise<Session | null> {
+  return supabase.auth.getSession().then(({ data }) => data.session);
+}
+
+/** Subscribe to auth changes. Returns an unsubscribe fn. */
+export function onAuthChange(cb: (user: AuthUser | null) => void): () => void {
+  const { data } = supabase.auth.onAuthStateChange((_event, session) => {
+    cb(toAuthUser(session?.user ?? null));
+  });
+  return () => data.subscription.unsubscribe();
+}
+
+export async function signUpWithEmail(email: string, password: string, name?: string): Promise<AuthUser> {
+  const redirectUrl = `${window.location.origin}/home`;
+  const { data, error } = await supabase.auth.signUp({
+    email,
+    password,
+    options: {
+      emailRedirectTo: redirectUrl,
+      data: { display_name: name || email.split("@")[0] },
+    },
+  });
+  if (error) throw error;
+  const user = toAuthUser(data.user);
+  if (!user) throw new Error("Signup did not return a user.");
   return user;
 }
-export function signOut() { localStorage.removeItem(AUTH_KEY); }
+
+export async function signInWithEmail(email: string, password: string): Promise<AuthUser> {
+  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+  if (error) throw error;
+  const user = toAuthUser(data.user);
+  if (!user) throw new Error("Sign in failed.");
+  return user;
+}
+
+export async function signInWithGoogle(): Promise<void> {
+  const result = await lovable.auth.signInWithOAuth("google", {
+    redirect_uri: `${window.location.origin}/home`,
+  });
+  if (result.error) throw result.error;
+}
+
+export async function sendPasswordReset(email: string): Promise<void> {
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: `${window.location.origin}/reset-password`,
+  });
+  if (error) throw error;
+}
+
+export async function signOut(): Promise<void> {
+  await supabase.auth.signOut();
+}
