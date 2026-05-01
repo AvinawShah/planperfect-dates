@@ -144,13 +144,14 @@ Always return the FULL updated plan (even unchanged steps), a clear list of dete
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
+        model: "openai/gpt-5-mini",
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: ctx },
         ],
         tools: [TOOL],
         tool_choice: { type: "function", function: { name: "adapt_plan" } },
+        reasoning: { effort: "medium" },
       }),
     });
 
