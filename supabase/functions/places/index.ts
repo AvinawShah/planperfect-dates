@@ -1,5 +1,8 @@
 // Google Places + Geocoding proxy. Keeps GOOGLE_MAPS_API_KEY server-side.
-import { corsHeaders } from "../_shared/cors.ts";
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+};
 
 const KEY = Deno.env.get("GOOGLE_MAPS_API_KEY");
 
