@@ -17,7 +17,7 @@ let mapsPromise: Promise<void> | undefined;
 export function loadGoogleMaps(): Promise<void> {
   if (window.google?.maps?.Map) return Promise.resolve();
   if (mapsPromise) return mapsPromise;
-  mapsPromise = new Promise((resolve, reject) => {
+  mapsPromise = new Promise<void>((resolve, reject) => {
     const key = import.meta.env['VITE_LOVABLE_CONNECTOR_GOOGLE_MAPS_BROWSER_KEY'];
     if (!key) { reject(new Error("Connect Google Maps to display your route.")); return; }
     const script = document.createElement("script");
