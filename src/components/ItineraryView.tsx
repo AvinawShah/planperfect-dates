@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { getJourneyStops, saveJourneyStops, type Plan, type JourneyStopInput } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import ShareableCard from "@/components/plan/ShareableCard";
+import ItineraryMap from "@/components/plan/ItineraryMap";
 
 interface Props {
   plan: Plan;
@@ -144,6 +145,8 @@ const ItineraryView = ({ plan, onSave, onShare, saved }: Props) => {
           );
         })}
       </ol>
+
+      <ItineraryMap plan={plan} />
 
       {/* Off-screen render target for image export */}
       <div

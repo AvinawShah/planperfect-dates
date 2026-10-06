@@ -179,3 +179,22 @@
   100% { transform: scale(1); opacity: 1; }
 }
 .animate-pop-in { animation: pop-in 0.5s var(--ease-out-soft) both; }
+
+.itinerary-map-sticker {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+  border: 2px solid hsl(var(--card));
+  box-shadow: var(--shadow-soft);
+  font-size: 12px;
+  font-weight: 700;
+  pointer-events: none;
+}
+.itinerary-emoji-float { animation: itinerary-bob 3s ease-in-out infinite; }
+@keyframes itinerary-bob { 50% { transform: translateY(-6px) rotate(5deg); } }
+@media (prefers-reduced-motion: reduce) { .itinerary-emoji-float { animation: none; } }
